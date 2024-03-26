@@ -99,18 +99,19 @@
 
     <div class="linechart">
         <h3>Monthly Data</h3>
-        <div style="width: calc(50vw - 14rem);height: calc(50vh - 2rem);">
-            <SfChart Title="Mean Daily Maximums/Minimums" Width="100%">
-                <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
-
-                <ChartSeriesCollection>
-                    <ChartSeries DataSource="@MaximumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
-                    </ChartSeries>
-                    <ChartSeries DataSource="@MinimumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
-                    </ChartSeries>
-                </ChartSeriesCollection>
-            </SfChart>
-        </div>
+        <SfChart Title="Mean Daily Maximums/Minimums" Width="730">
+            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Hide"></ChartPrimaryXAxis>
+            <ChartTooltipSettings Enable="true" Header="Temperature" Format="<b>${series.name} : ${point.y}°C</b>"></ChartTooltipSettings>
+            <ChartSeriesCollection>
+                <ChartSeries DataSource="@MaximumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
+                    <ChartMarker Visible="true" Height="5" Width="5" Shape="ChartShape.Circle" IsFilled="true" />
+                </ChartSeries>
+                <ChartSeries DataSource="@MinimumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
+                    <ChartMarker Visible="true" Height="5" Width="5" Shape="ChartShape.Circle" IsFilled="true" />
+                </ChartSeries>
+            </ChartSeriesCollection>
+            <ChartLegendSettings Visible="true" Position="LegendPosition.Top" />
+        </SfChart>
     </div>
 
     <div class="get-source-code">
