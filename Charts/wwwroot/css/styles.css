@@ -164,9 +164,9 @@ li {
     }
 
         .input-section input[type="text"] {
-            width: calc(30% - 5px);
+            width: calc(25% - 5px);
             padding: 10px;
-            margin-right: 10px;
+            margin-right: 15px;
             border-radius: 5px;
             border: 1px solid #ccc;
         }

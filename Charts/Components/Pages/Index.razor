@@ -36,7 +36,18 @@
     <div class="input-section">
         Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
         Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
-        <button @onclick="RefreshData" type="button" class="btn btn-primary">Refresh</button>
+        @if (displayIcon)
+        {
+            <!-- Display the refresh icon using the Segoe MDL2 Assets font -->
+            <button @onclick="RefreshData" type="button" class="btn btn-primary" style="font-family: Segoe MDL2 Assets;">&#xE895;</button>
+        }
+        else
+        {
+            <!-- Display the normal text using default font -->
+            <button @onclick="RefreshData" type="button" class="btn btn-primary">Refresh</button>
+        }
+        
+       
     </div>
 
 
@@ -173,6 +184,14 @@
     private double? _humidity;
     private bool forceRedraw = false; // Declare the variable here
     private double? _dewPoint;
+    
+        // Define the Segoe MDL2 Assets icon for the refresh symbol
+    string refreshIcon = "&#xE895;"; // This is the code for the refresh icon in Segoe MDL2 Assets font
+
+        // Define a boolean flag to determine whether to display text or icon
+        bool displayIcon = false; // Set this to true when you want to display the icon, and false otherwise
+    
+
 
     private double? DewPoint
     {
@@ -186,23 +205,30 @@
     [JSInvokable]
     public void OnResize(int width, int height)
     {
-        if(ViewportWidth == width && ViewportHeight == height) return;
+        if (ViewportWidth == width && ViewportHeight == height) return;
+    
         ViewportWidth = width;
         ViewportHeight = height;
-        if (ViewportWidth < 468)
+
+        switch (ViewportWidth)
         {
-            Width = "300";
+            case < 468:
+                Width = "300";
+                displayIcon = true;
+                break;
+            case < 769:
+                Width = "600";
+                displayIcon = false;
+                break;
+            default:
+                Width = "730";
+                displayIcon = false;
+                break;
         }
-        else if (ViewportWidth < 769)
-        {
-            Width = "600";
-        }
-        else
-        {
-            Width = "730";
-        }
+
         StateHasChanged();
     }
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
