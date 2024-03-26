@@ -2,24 +2,23 @@
 @using Charts.Models
 @using Syncfusion.Blazor.Charts
 @inject ApiService ApiService
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 @rendermode InteractiveServer
 
 @* Todo
 - check long/lat data
-- update chart on station change
-- add remaining pictures
 - when no data found
 - another data point instead of temp
 - link to long/lat picker
 - footer w/ copyright
 - restructrue methods
-- centre chart in container
 - month length (axis label) check
-- rewrite api access
+- move fetching classes to new WeatherService
+
 *@
 
 <PageTitle>Blazor Weather App</PageTitle>
+
 <script>
     window.registerViewportChangeCallback = (dotnetHelper) => {
         window.addEventListener('load', () => {
@@ -32,62 +31,59 @@
 </script>
 
 <div class="container">
-
     <div class="input-section">
         Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
         Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
         @if (displayIcon)
         {
-            <!-- Display the refresh icon using the Segoe MDL2 Assets font -->
             <button @onclick="RefreshData" type="button" class="btn btn-primary" style="font-family: Segoe MDL2 Assets;">&#xE895;</button>
         }
         else
         {
-            <!-- Display the normal text using default font -->
             <button @onclick="RefreshData" type="button" class="btn btn-primary">Refresh</button>
         }
-        
-       
     </div>
-
 
     <div class="weather-container">
         <h3>Current Weather</h3>
-        <h4>Station: @_stationName</h4>
-        @if (_currentWeather == null)
+        <h4>Station: @StationName</h4>
+        @if (CurrentWeather == null)
         {
             <p>Loading....</p>
         }
         else
         {
             <div class="current-temp">
-                @if (Icon == "sunny")
+                @switch (Icon)
                 {
-                    <img src="sunny.png" alt="Sunny" id="weatherImage">
-                }
-                else if (Icon == "cloudy")
-                {
-                    <img src="cloudy.png" alt="Cloudy" id="weatherImage">
-                }
-                else if (Icon == "partly-cloudy-day")
-                {
-                    <img src="partly-cloudy.png" alt="Partly Cloudy" id="weatherImage">
-                }
-                else if (Icon == "rainy")
-                {
-                    <img src="rainy.png" alt="Rainy" id="weatherImage">
-                }
-                else if (Icon == "thunderstorm")
-                {
-                    <img src="thunderstorm.png" alt="Thunderstorm" id="weatherImage">
-                }
-                else if (Icon == "clear-night")
-                {
-                    <img src="clear-night.png" alt="Clear Night" id="weatherImage">
-                }
-                else if (Icon == "cloudy-night")
-                {
-                    <img src="cloudy-night.png" alt="Cloudy Night" id="weatherImage">
+                    case "sunny":
+                        @:<img src="sunny.png" alt="Sunny" id="weatherImage">
+                        break;
+
+                    case "cloudy":
+                        @:<img src="cloudy.png" alt="Cloudy" id="weatherImage">
+                        break;
+
+                    case "partly-cloudy-day":
+                        @:<img src="partly-cloudy.png" alt="Partly Cloudy" id="weatherImage">
+                        break;
+
+                    case "rainy":
+                        @:<img src="rainy.png" alt="Rainy" id="weatherImage">
+                        break;
+
+                    case "thunderstorm":
+                        @:<img src="thunderstorm.png" alt="Thunderstorm" id="weatherImage">
+                        break;
+
+                    case "clear-night":
+                        @:<img src="clear-night.png" alt="Clear Night" id="weatherImage">
+                        break;
+
+                    case "cloudy-night":
+                        @:<img src="cloudy-night.png" alt="Cloudy Night" id="weatherImage">
+                        break;
+
                 }
                 <span class="value" id="temperature">@Temperature °C</span>
             </div>
@@ -118,7 +114,6 @@
                 </div>
             </div>
         }
-
     </div>
 
     <div class="historical-averages">
@@ -160,24 +155,20 @@
 
 @code {
 
-    #region Private Members
-    public string Width { get; set; } = "730";
-
     public class ChartData
     {
         public string X { get; set; }
         public double Y { get; set; }
     }
-
-    private List<ChartData> MaximumTemperatures = new List<ChartData>{};
-    private List<ChartData> MinimumTemperatures = new List<ChartData>{};
-
-    public int ViewportWidth { get; set; }
-    public int ViewportHeight { get; set; }
-
-   private WeatherResponseModel? _currentWeather;
-    private string? _stationName;
-    private double? _temperature;
+    #region Private Members
+    private string Width { get; set; } = "730";
+    private List<ChartData> MaximumTemperatures = [];
+    private List<ChartData> MinimumTemperatures = [];
+    private int ViewportWidth { get; set; }
+    private int ViewportHeight { get; set; }
+    private WeatherResponseModel? CurrentWeather { get; set; }
+    private string? StationName { get; set; }
+    
     private double RecordHigh { get; set; }
     private double MaxTemp { get; set; }
     private int RecordLowYear { get; set; }
@@ -192,32 +183,27 @@
     private string Longitude { get; set; }
     private string Icon { get; set; }
     private static Boolean bigWindowSize = true;
+
+    private double? _temperature;
     private double? Temperature
     {
         get => _temperature;
         set => _temperature = value.HasValue ? Math.Round(value.Value, 1) : null;
     }
     private double? _humidity;
-    private bool forceRedraw = false; // Declare the variable here
+     
+    bool displayIcon = false; 
+    
+
     private double? _dewPoint;
-    
-        // Define the Segoe MDL2 Assets icon for the refresh symbol
-    string refreshIcon = "&#xE895;"; // This is the code for the refresh icon in Segoe MDL2 Assets font
-
-        // Define a boolean flag to determine whether to display text or icon
-        bool displayIcon = false; // Set this to true when you want to display the icon, and false otherwise
-    
-
-
     private double? DewPoint
     {
         get => _dewPoint;
         set => _dewPoint = value.HasValue ? Math.Round(value.Value, 1) : null;
     }
     #endregion
-    private int screenWidth;
 
-
+    #region Methods
     [JSInvokable]
     public void OnResize(int width, int height)
     {
@@ -241,16 +227,14 @@
                 displayIcon = false;
                 break;
         }
-
         StateHasChanged();
     }
-
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await JS.InvokeVoidAsync("window.registerViewportChangeCallback", DotNetObjectReference.Create(this));
+            await Js.InvokeVoidAsync("window.registerViewportChangeCallback", DotNetObjectReference.Create(this));
         }
     }
 
@@ -259,34 +243,18 @@
         Latitude = "51.04";
         Longitude = "13.74";
 
-        _currentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
+        CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
 
-        if (_currentWeather != null)
+        if (CurrentWeather != null)
         {
             AssignValues();
         }
-        await GetHistoricalData();
-        await GetHistoricalData2();
+
+        await GetDisplayData();
+        await GetChartData();
     }
 
-    bool IsMedium = false;
-    bool IsSmall = false;
-
-    protected void UpdatedBrowserWidth(object sender, int width)
-    {
-        if (!bigWindowSize && width >= 1000)
-        {
-            bigWindowSize = true;
-            base.StateHasChanged();
-        }
-        else if (bigWindowSize && width < 1000)
-        {
-            bigWindowSize = false;
-            base.StateHasChanged();
-        }
-    }
-
-    private async Task GetHistoricalData()
+    private async Task GetDisplayData()
     {
         var desiredDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
         var responses = await FetchHistoricalWeatherData(desiredDate);
@@ -296,7 +264,7 @@
         DisplayDailyMeans(days);
     }
 
-    private async Task GetHistoricalData2()
+    private async Task GetChartData()
     {
         var entireMonth = await FetchEntireMonth();
         var dayModels = CreateDayModels(entireMonth);
@@ -319,7 +287,7 @@
             .ToList();
     }
 
-    private List<DayModel> CreateDayModels(List<WeatherModel> mergedList)
+    private static List<DayModel> CreateDayModels(IEnumerable<WeatherModel> mergedList)
     {
         return mergedList
             .Where(weather => weather.Temperature.HasValue)
@@ -337,9 +305,8 @@
             .ToList();
     }
 
-    private List<DayModel> GroupDayModels(List<DayModel> dayModels)
+    private static List<DayModel> GroupDayModels(IEnumerable<DayModel> dayModels)
     {
-        var gasd = dayModels.Max(d => d.MaxTemp);
         return dayModels
             .GroupBy(dayModel => dayModel.Day)
             .Select(group => new DayModel
@@ -350,8 +317,6 @@
                     // Include other properties as needed
                 })
             .ToList();
-
-
     }
 
     private void PopulateChartData(List<DayModel> groupedDayModels)
@@ -366,7 +331,6 @@
         }
     }
 
-
     private async Task RefreshData()
     {
         // Validate latitude and longitude inputs
@@ -376,15 +340,14 @@
             return;
         }
 
-        _currentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
+        CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
 
-        if (_currentWeather != null)
+        if (CurrentWeather != null)
         {
             AssignValues();
         }
-        await GetHistoricalData();
-        await GetHistoricalData2();
-
+        await GetDisplayData();
+        await GetChartData();
     }
 
     private static List<DayModel> CalculateDailyMeans(MultipleWeatherResponseModel mergedResponse)
@@ -412,11 +375,8 @@
 
         if (monthly)
         {
-            // Get the first day of the month
             var firstDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month, 1);
-
-            // Get the last day of the month
-            var lastDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month + 1, 1);
+            var lastDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month + 1, 1); // + 1 to fix issue with API response that doesn't include last day of month
 
             tasks.Add(ApiService.GetMonthlyData(firstDayOfMonth.ToString("yyyy-MM-dd"), lastDayOfMonth.ToString("yyyy-MM-dd"), Latitude, Longitude));
 
@@ -442,7 +402,7 @@
     }
 
 
-    private MultipleWeatherResponseModel MergeWeatherResponses(MultipleWeatherResponseModel?[] responses, int day)
+    private static MultipleWeatherResponseModel MergeWeatherResponses(IEnumerable<MultipleWeatherResponseModel?> responses, int day)
     {
         var mergedResponse = new MultipleWeatherResponseModel();
 
@@ -459,25 +419,39 @@
         return mergedResponse;
     }
 
-
     private void DisplayDailyMeans(IReadOnlyCollection<DayModel> days)
     {
-        MeanTemp = days.Average(x => x.MeanTemp);
-        MaxTemp = days.Average(x => x.MaxTemp);
-        MinTemp = days.Average(x => x.MinTemp);
-        Precipitation = days.Average(x => x.Precipitation);
-        SunshineHours = days.Average(x => x.SunshineHours);
+        CalculateDailyMeans(days);
+        FindRecordHighAndLow(days);
+    }
 
+    private void CalculateDailyMeans(IReadOnlyCollection<DayModel> days)
+    {
+        MeanTemp = CalculateAverage(days, x => x.MeanTemp);
+        MaxTemp = CalculateAverage(days, x => x.MaxTemp);
+        MinTemp = CalculateAverage(days, x => x.MinTemp);
+        Precipitation = CalculateAverage(days, x => x.Precipitation);
+        SunshineHours = CalculateAverage(days, x => x.SunshineHours);
+    }
+
+    private static double CalculateAverage<T>(IEnumerable<T> collection, Func<T, double> selector)
+    {
+        return collection.Average(selector);
+    }
+
+    private void FindRecordHighAndLow(IReadOnlyCollection<DayModel> days)
+    {
         var recordHighData = days.MaxBy(x => x.MaxTemp);
         var recordLowData = days.MinBy(x => x.MinTemp);
+
         if (recordHighData != null)
         {
             RecordHigh = recordHighData.MaxTemp;
             RecordHighYear = recordHighData.Year;
         }
 
-        if (recordHighData == null) return;
-        if (recordLowData == null) return;
+        if (recordHighData == null || recordLowData == null) return;
+
         RecordLow = recordLowData.MinTemp;
         RecordLowYear = recordLowData.Year;
     }
@@ -485,38 +459,28 @@
 
     private void AssignValues()
     {
-        if (_currentWeather?.sources != null) _stationName = _currentWeather?.sources[0].StationName;
-        Temperature = _currentWeather?.weather?.Temperature;
-        _humidity = _currentWeather?.weather?.Humidity;
-        DewPoint = _currentWeather?.weather?.DewPoint;
-        CloudCover = _currentWeather?.weather?.CloudCover;
-        if (_currentWeather?.weather?.Icon == "clear-day")
-        {
-            Icon = "sunny";
-        }
-        else if (_currentWeather?.weather?.Icon == "cloudy")
-        {
-            Icon = "cloudy";
-        }
-        else if (_currentWeather?.weather?.Icon == "rainy")
-        {
-            Icon = "rainy";
-        }
-        else if (_currentWeather?.weather?.Icon == "partly-cloudy-day")
-        {
-            Icon = "partly-cloudy";
-        }
-        else if (_currentWeather?.weather?.Icon == "thunderstorm")
-        {
-            Icon = "thunderstorm";
-        }
-        else if (_currentWeather?.weather?.Icon == "clear-night")
-        {
-            Icon = "clear-night";
-        }
-        else if (_currentWeather?.weather?.Icon == "partly-cloudy-night")
-        {
-            Icon = "cloudy-night";
-        }
+        if (CurrentWeather?.sources != null) StationName = CurrentWeather?.sources[0].StationName;
+        Temperature = CurrentWeather?.weather?.Temperature;
+        _humidity = CurrentWeather?.weather?.Humidity;
+        DewPoint = CurrentWeather?.weather?.DewPoint;
+        CloudCover = CurrentWeather?.weather?.CloudCover;
+        
+        SetWeatherLogo();
     }
+
+    private void SetWeatherLogo()
+    {
+        Icon = CurrentWeather?.weather?.Icon switch
+        {
+            "clear-day" => "sunny",
+            "cloudy" => "cloudy",
+            "rainy" => "rainy",
+            "partly-cloudy-day" => "partly-cloudy",
+            "thunderstorm" => "thunderstorm",
+            "clear-night" => "clear-night",
+            "partly-cloudy-night" => "cloudy-night",
+            _ => Icon
+        };
+    }
+    #endregion
 }

@@ -2,7 +2,6 @@
 using RestSharp;
 
 namespace Charts;
-
 public class ApiService
 {
     private readonly RestClient _client;
