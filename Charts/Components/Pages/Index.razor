@@ -57,31 +57,31 @@
                 @switch (Icon)
                 {
                     case "sunny":
-                        @:<img src="sunny.png" alt="Sunny" id="weatherImage">
+                        @:<img src="/images/sunny.png" alt="Sunny" id="weatherImage">
                         break;
 
                     case "cloudy":
-                        @:<img src="cloudy.png" alt="Cloudy" id="weatherImage">
+                        @:<img src="/images/cloudy.png" alt="Cloudy" id="weatherImage">
                         break;
 
                     case "partly-cloudy-day":
-                        @:<img src="partly-cloudy.png" alt="Partly Cloudy" id="weatherImage">
+                        @:<img src="/images/partly-cloudy.png" alt="Partly Cloudy" id="weatherImage">
                         break;
 
                     case "rainy":
-                        @:<img src="rainy.png" alt="Rainy" id="weatherImage">
+                        @:<img src="/images/rainy.png" alt="Rainy" id="weatherImage">
                         break;
 
                     case "thunderstorm":
-                        @:<img src="thunderstorm.png" alt="Thunderstorm" id="weatherImage">
+                        @:<img src="/images/thunderstorm.png" alt="Thunderstorm" id="weatherImage">
                         break;
 
                     case "clear-night":
-                        @:<img src="clear-night.png" alt="Clear Night" id="weatherImage">
+                        @:<img src="/images/clear-night.png" alt="Clear Night" id="weatherImage">
                         break;
 
                     case "cloudy-night":
-                        @:<img src="cloudy-night.png" alt="Cloudy Night" id="weatherImage">
+                        @:<img src="/images/cloudy-night.png" alt="Cloudy Night" id="weatherImage">
                         break;
 
                 }
@@ -214,13 +214,17 @@
 
         switch (ViewportWidth)
         {
+            case < 410:
+                Width = "250";
+                displayIcon = true;
+                break;
             case < 468:
                 Width = "300";
                 displayIcon = true;
                 break;
             case < 769:
                 Width = "600";
-                displayIcon = false;
+                displayIcon = true;
                 break;
             default:
                 Width = "730";
