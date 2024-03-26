@@ -2,6 +2,7 @@
 @using Charts.Models
 @using Syncfusion.Blazor.Charts
 @inject ApiService ApiService
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 @* Todo
@@ -18,15 +19,24 @@
 - rewrite api access
 *@
 
-<PageTitle>Home</PageTitle>
-
+<PageTitle>Blazor Weather App</PageTitle>
+<script>
+    window.registerViewportChangeCallback = (dotnetHelper) => {
+        window.addEventListener('load', () => {
+            dotnetHelper.invokeMethodAsync('OnResize', window.innerWidth, window.innerHeight);
+        });
+        window.addEventListener('resize', () => {
+            dotnetHelper.invokeMethodAsync('OnResize', window.innerWidth, window.innerHeight);
+        });
+    }
+</script>
 
 <div class="container">
 
     <div class="input-section">
         Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
         Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
-        <button @onclick="RefreshData">Refresh</button>
+        <button @onclick="RefreshData" type="button" class="btn btn-primary">Refresh</button>
     </div>
 
 
@@ -99,15 +109,15 @@
 
     <div class="linechart">
         <h3>Mean Daily Max and Min for @DateTime.Now.ToString("MMMM")</h3>
-        <SfChart Width="730">
+        <SfChart Width="@Width" >
             <ChartPrimaryXAxis Title="Day" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Hide"></ChartPrimaryXAxis>
             <ChartPrimaryYAxis Title="Temperatures"></ChartPrimaryYAxis>
             <ChartTooltipSettings Enable="true" Header="Temperature" Format="<b>${series.name} : ${point.y}°C</b>"></ChartTooltipSettings>
             <ChartSeriesCollection>
-                <ChartSeries DataSource="@MaximumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
+                <ChartSeries DataSource="@MaximumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line" Width="2" Fill="red">
                     <ChartMarker Visible="true" Height="5" Width="5" Shape="ChartShape.Circle" IsFilled="true" />
                 </ChartSeries>
-                <ChartSeries DataSource="@MinimumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
+                <ChartSeries DataSource="@MinimumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line" Width="2" Fill="blue">
                     <ChartMarker Visible="true" Height="5" Width="5" Shape="ChartShape.Circle" IsFilled="true" />
                 </ChartSeries>
             </ChartSeriesCollection>
@@ -116,7 +126,7 @@
     </div>
 
     <div class="get-source-code">
-        <a href="https://github.com/extrasharp/BlazorWeatherApp" type="button" class="btn btn-primary" lin>Source Code</a>
+        <a href="https://github.com/extrasharp/BlazorWeatherApp" type="button" class="btn btn-primary">Source Code</a>
     </div>
 </div>
 
@@ -124,7 +134,7 @@
 @code {
 
     #region Private Members
-    public string Width { get; set; } = "90%";
+    public string Width { get; set; } = "730";
 
     public class ChartData
     {
@@ -134,6 +144,9 @@
 
     private List<ChartData> MaximumTemperatures = new List<ChartData>{};
     private List<ChartData> MinimumTemperatures = new List<ChartData>{};
+
+    public int ViewportWidth { get; set; }
+    public int ViewportHeight { get; set; }
 
    private WeatherResponseModel? _currentWeather;
     private string? _stationName;
@@ -151,6 +164,7 @@
     private string Latitude { get; set; }
     private string Longitude { get; set; }
     private string Icon { get; set; }
+    private static Boolean bigWindowSize = true;
     private double? Temperature
     {
         get => _temperature;
@@ -168,10 +182,36 @@
     #endregion
     private int screenWidth;
 
+
+    [JSInvokable]
+    public void OnResize(int width, int height)
+    {
+        if(ViewportWidth == width && ViewportHeight == height) return;
+        ViewportWidth = width;
+        ViewportHeight = height;
+        if (ViewportWidth < 468)
+        {
+            Width = "300";
+        }
+        else if (ViewportWidth < 769)
+        {
+            Width = "600";
+        }
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("window.registerViewportChangeCallback", DotNetObjectReference.Create(this));
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         Latitude = "51.04";
-        Longitude = "13.4";
+        Longitude = "13.74";
 
         _currentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
 
@@ -183,7 +223,22 @@
         await GetHistoricalData2();
     }
 
+    bool IsMedium = false;
+    bool IsSmall = false;
 
+    protected void UpdatedBrowserWidth(object sender, int width)
+    {
+        if (!bigWindowSize && width >= 1000)
+        {
+            bigWindowSize = true;
+            base.StateHasChanged();
+        }
+        else if (bigWindowSize && width < 1000)
+        {
+            bigWindowSize = false;
+            base.StateHasChanged();
+        }
+    }
 
     private async Task GetHistoricalData()
     {

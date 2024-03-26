@@ -117,71 +117,76 @@ li {
     width: 100%;
     text-align: right;
 }
-
-/* Button styles */
-.btn {
-    background-color: #007bff;
-    color: #fff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+.linechart{
+    width: 1730px;
 }
 
-    .btn:hover {
-        background-color: #0056b3;
-    }
-
-/* Styles for smaller screens */
-@@media screen and (max-width: 768px) {
-    .container {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .weather-container,
-    .historical-averages,
+@media (max-width: 768px) {
     .linechart {
-        width: 100%; /* Set all containers to occupy full width */
-        margin-bottom: 20px; /* Add some space between containers */
+        width: 100%; /* Make the chart take full available width */
     }
-
-    .linechart {
-        width: 100%; /* Ensure the line chart fills the width of its container */
-    }
-}
-
-/* Additional styles for latitude and longitude input section */
-.input-section {
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-    .input-section input[type="text"] {
-        width: calc(30% - 5px);
-        padding: 10px;
-        margin-right: 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-    }
-
-    .input-section button {
-        padding: 10px 20px;
+    /* Button styles */
+    .btn {
         background-color: #007bff;
         color: #fff;
+        padding: 10px 20px;
         border: none;
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s;
     }
 
-        .input-section button:hover {
+        .btn:hover {
             background-color: #0056b3;
         }
-/* Media query for narrower widths */
-@@media screen and (max-width: 768px) {
-    .input-section input[type="text"] {
-        width: calc(20% - 5px); /* Adjust the width for narrower screens */
+    /* Styles for smaller screens */
+    @@media screen and (max-width: 768px) {
+        .container {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .weather-container,
+        .historical-averages,
+        .linechart {
+            width: 100%; /* Set all containers to occupy full width */
+            margin-bottom: 20px; /* Add some space between containers */
+        }
+
+        .linechart {
+            width: 100%; /* Ensure the line chart fills the width of its container */
+        }
     }
-}
+    /* Additional styles for latitude and longitude input section */
+    .input-section {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+        .input-section input[type="text"] {
+            width: calc(30% - 5px);
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .input-section button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+            .input-section button:hover {
+                background-color: #0056b3;
+            }
+    /* Media query for narrower widths */
+    @@media screen and (max-width: 768px) {
+        .input-section input[type="text"] {
+            width: calc(20% - 5px); /* Adjust the width for narrower screens */
+        }
+    }

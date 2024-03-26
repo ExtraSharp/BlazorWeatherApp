@@ -10,6 +10,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddSingleton<ApiService>();
 
+
+
 Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NBaF5cXmZCekx0QXxbf1x0ZFZMZFlbQXZPIiBoS35RckVgW3pfdnBWR2hUVERz");
 
 var app = builder.Build();
