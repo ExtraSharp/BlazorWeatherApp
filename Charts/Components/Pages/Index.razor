@@ -98,9 +98,10 @@
     </div>
 
     <div class="linechart">
-        <h3>Monthly Data</h3>
-        <SfChart Title="Mean Daily Maximums/Minimums" Width="730">
-            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Hide"></ChartPrimaryXAxis>
+        <h3>Mean Daily Max and Min for @DateTime.Now.ToString("MMMM")</h3>
+        <SfChart Width="730">
+            <ChartPrimaryXAxis Title="Day" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Hide"></ChartPrimaryXAxis>
+            <ChartPrimaryYAxis Title="Temperatures"></ChartPrimaryYAxis>
             <ChartTooltipSettings Enable="true" Header="Temperature" Format="<b>${series.name} : ${point.y}°C</b>"></ChartTooltipSettings>
             <ChartSeriesCollection>
                 <ChartSeries DataSource="@MaximumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
