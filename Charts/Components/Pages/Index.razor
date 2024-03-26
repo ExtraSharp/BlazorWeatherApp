@@ -1,0 +1,410 @@
+﻿@page "/"
+@using Charts.Models
+@using Syncfusion.Blazor.Charts
+@inject ApiService ApiService
+@rendermode InteractiveServer
+
+@* Todo
+- check long/lat data
+- update chart on station change
+- add remaining pictures
+- when no data found
+- another data point instead of temp
+- link to long/lat picker
+- footer w/ copyright
+- restructrue methods
+- centre chart in container
+- month length (axis label) check
+- rewrite api access
+*@
+
+<PageTitle>Home</PageTitle>
+
+
+<div class="container">
+
+    <div class="input-section">
+        Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
+        Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
+        <button @onclick="RefreshData">Refresh</button>
+    </div>
+
+
+    <div class="weather-container">
+        <h3>Current Weather</h3>
+        <h4>Station: @_stationName</h4>
+        @if (_currentWeather == null)
+        {
+            <p>Loading....</p>
+        }
+        else
+        {
+            <div class="current-temp">
+                @if (Icon == "sunny")
+                {
+                    <img src="sunny.png" alt="Weather Condition" id="weatherImage">
+                }
+                else if (Icon == "cloudy")
+                {
+                    <img src="cloudy.png" alt="Default Weather Condition" id="weatherImage">
+                }
+                else
+                {
+                    <img src="rainy.png" alt="Default Weather Condition" id="weatherImage">
+                }
+                <span class="value" id="temperature">@Temperature °C</span>
+            </div>
+
+            <div class="data-group">
+                <div class="data-item">
+                    <i class="fas fa-thermometer-half"></i>
+                    <span class="label">Temperature:</span>
+                    <span class="value" id="temperature">@Temperature°C</span>
+                </div>
+                <div class="data-item">
+                    <i class="fas fa-tint"></i>
+                    <span class="label">Dew Point:</span>
+                    <span class="value" id="dewpoint">@(DewPoint)°C</span>
+                </div>
+            </div>
+
+            <div class="data-group">
+                <div class="data-item">
+                    <i class="fas fa-water"></i>
+                    <span class="label">Humidity:</span>
+                    <span class="value" id="humidity">@_humidity %</span>
+                </div>
+                <div class="data-item">
+                    <i class="fas fa-cloud"></i>
+                    <span class="label">Cloud Cover:</span>
+                    <span class="value" id="cloudCover">@CloudCover %</span>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <div class="historical-averages">
+        <h3>Historical Data for @System.DateTime.Now.ToString("dd MMM")</h3>
+        <ul>
+            <li>Mean Daily Maximum: @MaxTemp.ToString("F1") °C</li>
+            <li>Daily Mean: @MeanTemp.ToString("F1") °C</li>
+            <li>Mean Daily Minimum: @MinTemp.ToString("F1") °C</li>
+            <li>Precipitation: @Precipitation.ToString("F1") mm</li>
+            <li>Sunshine Hours: @SunshineHours.ToString("F1") hours</li>
+            <li>Record High: @RecordHigh.ToString("F1") °C (@RecordHighYear)</li>
+            <li>Record Low: @RecordLow.ToString("F1") °C (@RecordLowYear)</li>
+        </ul>
+    </div>
+
+    <div class="linechart">
+        <h3>Monthly Data</h3>
+        <div style="width: calc(50vw - 14rem);height: calc(50vh - 2rem);">
+            <SfChart Title="Mean Daily Maximums/Minimums" Width="100%">
+                <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+
+                <ChartSeriesCollection>
+                    <ChartSeries DataSource="@MaximumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
+                    </ChartSeries>
+                    <ChartSeries DataSource="@MinimumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Line">
+                    </ChartSeries>
+                </ChartSeriesCollection>
+            </SfChart>
+        </div>
+    </div>
+
+    <div class="get-source-code">
+        <a href="https://github.com/extrasharp/BlazorWeatherApp" type="button" class="btn btn-primary" lin>Source Code</a>
+    </div>
+</div>
+
+
+@code {
+
+    #region Private Members
+    public string Width { get; set; } = "90%";
+
+    public class ChartData
+    {
+        public string X { get; set; }
+        public double Y { get; set; }
+    }
+
+    public List<ChartData> MaximumTemperatures = new List<ChartData>
+    {
+       
+    };
+
+    public List<ChartData> MinimumTemperatures = new List<ChartData>
+    {
+
+    };
+
+   private WeatherResponseModel? _currentWeather;
+    private string? _stationName;
+    private double? _temperature;
+    private double RecordHigh { get; set; }
+    private double MaxTemp { get; set; }
+    private int RecordLowYear { get; set; }
+    private int RecordHighYear { get; set; }
+    private double MeanTemp { get; set; }
+    private double MinTemp { get; set; }
+    private double Precipitation { get; set; }
+    private double SunshineHours { get; set; }
+    private double RecordLow { get; set; }
+    private double? CloudCover { get; set; }
+    private string Latitude { get; set; }
+    private string Longitude { get; set; }
+    private string Icon { get; set; }
+    private double? Temperature
+    {
+        get => _temperature;
+        set => _temperature = value.HasValue ? Math.Round(value.Value, 1) : null;
+    }
+    private double? _humidity;
+    private bool forceRedraw = false; // Declare the variable here
+    private double? _dewPoint;
+
+    private double? DewPoint
+    {
+        get => _dewPoint;
+        set => _dewPoint = value.HasValue ? Math.Round(value.Value, 1) : null;
+    }
+    #endregion
+    private int screenWidth;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Latitude = "51.04";
+        Longitude = "13.4";
+
+        _currentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
+
+        if (_currentWeather != null)
+        {
+            AssignValues();
+        }
+        await GetHistoricalData();
+        await GetHistoricalData2();
+    }
+
+
+
+    private async Task GetHistoricalData()
+    {
+        var desiredDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+        var responses = await FetchHistoricalWeatherData(desiredDate);
+        var mergedResponse = MergeWeatherResponses(responses, DateTime.Now.Day);
+        var days = CalculateDailyMeans(mergedResponse);
+
+        DisplayDailyMeans(days);
+    }
+
+    private async Task GetHistoricalData2()
+    {
+        var entireMonth = await FetchEntireMonth();
+        var dayModels = CreateDayModels(entireMonth);
+        var groupedDayModels = GroupDayModels(dayModels);
+
+        PopulateChartData(groupedDayModels);
+    }
+
+    private async Task<List<WeatherModel>> FetchEntireMonth()
+    {
+        var today = DateTime.Today;
+        var desiredDate = new DateTime(today.Year, today.Month, today.Day);
+
+        var responses = await FetchHistoricalWeatherData(desiredDate, true);
+
+        return responses
+            .Where(r => r != null)
+            .SelectMany(r => r.weather ?? Enumerable.Empty<WeatherModel>())
+            .Where(weather => weather.TimeStamp.Month == today.Month) // Filter by month
+            .ToList();
+    }
+
+    private List<DayModel> CreateDayModels(List<WeatherModel> mergedList)
+    {
+        return mergedList
+            .Where(weather => weather.Temperature.HasValue)
+            .GroupBy(weather => new { Day = weather.TimeStamp.Day, Month = weather.TimeStamp.Month, Year = weather.TimeStamp.Year })
+            .Select(group => new DayModel
+                {
+                    Day = group.First().TimeStamp.Day,
+                    Month = group.First().TimeStamp.Month,
+                    Year = group.First().TimeStamp.Year,
+                    MaxTemp = (double)group.Max(weather => weather.Temperature),
+                    MinTemp = (double)group.Min(weather => weather.Temperature),
+                    Precipitation = group.Average(weather => weather.Precipitation ?? double.MinValue)
+                    // Include other properties as needed
+                })
+            .ToList();
+    }
+
+    private List<DayModel> GroupDayModels(List<DayModel> dayModels)
+    {
+        var gasd = dayModels.Max(d => d.MaxTemp);
+        return dayModels
+            .GroupBy(dayModel => dayModel.Day)
+            .Select(group => new DayModel
+                {
+                    Day = group.Key,
+                    MaxTemp = group.Average(dayModel => dayModel.MaxTemp),
+                    MinTemp = group.Average(dayModel => dayModel.MinTemp),
+                    // Include other properties as needed
+                })
+            .ToList();
+
+
+    }
+
+    private void PopulateChartData(List<DayModel> groupedDayModels)
+    {
+        MaximumTemperatures.Clear();
+        MinimumTemperatures.Clear();
+
+        foreach (var day in groupedDayModels)
+        {
+             MaximumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MaxTemp });
+             MinimumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MinTemp });
+        }
+    }
+
+
+    private async Task RefreshData()
+    {
+        // Validate latitude and longitude inputs
+        if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude))
+        {
+            // Handle validation error
+            return;
+        }
+
+        _currentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
+
+        if (_currentWeather != null)
+        {
+            AssignValues();
+        }
+        await GetHistoricalData();
+        await GetHistoricalData2();
+
+    }
+
+    private static List<DayModel> CalculateDailyMeans(MultipleWeatherResponseModel mergedResponse)
+    {
+        var groupedByDay = mergedResponse.weather
+            .GroupBy(w => w.TimeStamp.Date);
+
+        return groupedByDay.Select(group => new DayModel
+            {
+                Day = group.Key.Day,
+                Month = group.Key.Month,
+                Year = group.Key.Year,
+                MeanTemp = group.Average(w => w?.Temperature ?? 0), // Calculate the mean temperature
+                MaxTemp = group.Max(w => w?.Temperature ?? 0), // Calculate the mean temperature
+                MinTemp = group.Min(w => w?.Temperature ?? 0),
+                Precipitation = group.Sum(w => w?.Precipitation ?? 0),
+                SunshineHours = group.Sum(w => w?.SunshineHours / 60 ?? 0) // Calculate the mean temperature
+            })
+            .ToList();
+    }
+
+    private async Task<MultipleWeatherResponseModel?[]> FetchHistoricalWeatherData(DateTime desiredDate, bool monthly = false)
+    {
+        var tasks = new List<Task<MultipleWeatherResponseModel?>>();
+
+        if (monthly)
+        {
+            // Get the first day of the month
+            var firstDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month, 1);
+
+            // Get the last day of the month
+            var lastDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month + 1, 1);
+
+            tasks.Add(ApiService.GetMonthlyData(firstDayOfMonth.ToString("yyyy-MM-dd"), lastDayOfMonth.ToString("yyyy-MM-dd"), Latitude, Longitude));
+
+            // Loop for going back year by year
+            for (var i = 1; i <= 20; i++)
+            {
+                var yearToSubtract = desiredDate.Year - i;
+                var firstDayOfYear = new DateTime(yearToSubtract, desiredDate.Month, 1);
+                var lastDayOfYear = new DateTime(yearToSubtract, desiredDate.Month + 1, 1);
+                tasks.Add(ApiService.GetMonthlyData(firstDayOfYear.ToString("yyyy-MM-dd"), lastDayOfYear.ToString("yyyy-MM-dd"), Latitude, Longitude));
+            }
+        }
+        else
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                var dateString = desiredDate.AddYears(-i).ToString("yyyy-MM-dd");
+                tasks.Add(ApiService.GetHistoricalWeatherData(dateString, Latitude, Longitude));
+            }
+        }
+
+        return await Task.WhenAll(tasks);
+    }
+
+
+    private MultipleWeatherResponseModel MergeWeatherResponses(MultipleWeatherResponseModel?[] responses, int day)
+    {
+        var mergedResponse = new MultipleWeatherResponseModel();
+
+        var weatherList = responses
+            .Where(response => response?.weather != null)
+            .SelectMany(response => response?.weather)
+            .Where(weather => weather?.TimeStamp.Day == day)
+            .GroupBy(weather => weather?.TimeStamp)
+            .Select(group => group.First())
+            .ToList();
+
+        mergedResponse.weather = weatherList.ToArray();
+
+        return mergedResponse;
+    }
+
+
+    private void DisplayDailyMeans(IReadOnlyCollection<DayModel> days)
+    {
+        MeanTemp = days.Average(x => x.MeanTemp);
+        MaxTemp = days.Average(x => x.MaxTemp);
+        MinTemp = days.Average(x => x.MinTemp);
+        Precipitation = days.Average(x => x.Precipitation);
+        SunshineHours = days.Average(x => x.SunshineHours);
+
+        var recordHighData = days.MaxBy(x => x.MaxTemp);
+        var recordLowData = days.MinBy(x => x.MinTemp);
+        if (recordHighData != null)
+        {
+            RecordHigh = recordHighData.MaxTemp;
+            RecordHighYear = recordHighData.Year;
+        }
+
+        if (recordHighData == null) return;
+        if (recordLowData == null) return;
+        RecordLow = recordLowData.MinTemp;
+        RecordLowYear = recordLowData.Year;
+    }
+
+
+    private void AssignValues()
+    {
+        if (_currentWeather?.sources != null) _stationName = _currentWeather?.sources[0].StationName;
+        Temperature = _currentWeather?.weather?.Temperature;
+        _humidity = _currentWeather?.weather?.Humidity;
+        DewPoint = _currentWeather?.weather?.DewPoint;
+        CloudCover = _currentWeather?.weather?.CloudCover;
+        if (_currentWeather?.weather?.Icon == "sunny")
+        {
+            Icon = "sunny";
+        }
+        else if (_currentWeather?.weather?.Icon == "cloudy" || _currentWeather?.weather?.Icon == "partly-cloudy-day")
+        {
+            Icon = "cloudy";
+        }
+        else
+        {
+            Icon = "rainy";
+        }
+    }
+}

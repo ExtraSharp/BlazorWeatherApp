@@ -1,0 +1,187 @@
+﻿/* Common styles */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f0f5f9;
+}
+
+h3 {
+    margin-bottom: 20px; /* Remove default margin */
+}
+
+h4 {
+    margin-bottom: 20px; /* Remove default margin */
+    font-size: 1em;
+}
+
+/* Hover effect for h3 */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-width: 800px;
+    margin: 40px auto;
+}
+
+.weather-container,
+.historical-averages,
+.linechart {
+    flex: 1;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.linechart {
+    align-self: center;
+}
+
+.weather-container,
+.historical-averages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s; /* Smooth transition effect for background color */
+}
+
+    .weather-container:hover,
+    .historical-averages:hover,
+    .linechart:hover {
+        background: linear-gradient(to bottom, #f0f8ff, #ffffff); /* Change gradient on hover */
+    }
+
+.current-temp {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+    .current-temp img {
+        width: 100px;
+        margin-bottom: 10px;
+    }
+
+.data-group {
+    margin-bottom: 20px;
+}
+
+.data-item {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    justify-content: center;
+}
+
+    .data-item i {
+        margin-right: 10px;
+        color: #336699;
+    }
+
+.label {
+    font-weight: bold;
+    color: #336699;
+}
+
+.value {
+    margin-left: 5px;
+    font-weight: bold;
+    color: #336699;
+}
+
+.historical-averages h2 {
+    margin-top: 0;
+    color: #336699;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    margin-bottom: 10px;
+    padding: 5px;
+    font-weight: bold;
+    color: #336699;
+    border-radius: 5px;
+}
+
+/* Button styles */
+.get-source-code {
+    width: 100%;
+    text-align: right;
+}
+
+/* Button styles */
+.btn {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+
+/* Styles for smaller screens */
+@@media screen and (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .weather-container,
+    .historical-averages,
+    .linechart {
+        width: 100%; /* Set all containers to occupy full width */
+        margin-bottom: 20px; /* Add some space between containers */
+    }
+
+    .linechart {
+        width: 100%; /* Ensure the line chart fills the width of its container */
+    }
+}
+
+/* Additional styles for latitude and longitude input section */
+.input-section {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+    .input-section input[type="text"] {
+        width: calc(30% - 5px);
+        padding: 10px;
+        margin-right: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .input-section button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .input-section button:hover {
+            background-color: #0056b3;
+        }
+/* Media query for narrower widths */
+@@media screen and (max-width: 768px) {
+    .input-section input[type="text"] {
+        width: calc(20% - 5px); /* Adjust the width for narrower screens */
+    }
+}
