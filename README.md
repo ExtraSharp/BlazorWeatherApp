@@ -6,4 +6,4 @@ Simple Blazor Web application that reads current weather data from an api and di
 
 ## To-Do List
 
-Add climate chart similar to Wikipedia
+* Add climate chart similar to Wikipedia
