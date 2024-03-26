@@ -63,15 +63,31 @@
             <div class="current-temp">
                 @if (Icon == "sunny")
                 {
-                    <img src="sunny.png" alt="Weather Condition" id="weatherImage">
+                    <img src="sunny.png" alt="Sunny" id="weatherImage">
                 }
                 else if (Icon == "cloudy")
                 {
-                    <img src="cloudy.png" alt="Default Weather Condition" id="weatherImage">
+                    <img src="cloudy.png" alt="Cloudy" id="weatherImage">
                 }
-                else
+                else if (Icon == "partly-cloudy-day")
                 {
-                    <img src="rainy.png" alt="Default Weather Condition" id="weatherImage">
+                    <img src="partly-cloudy.png" alt="Partly Cloudy" id="weatherImage">
+                }
+                else if (Icon == "rainy")
+                {
+                    <img src="rainy.png" alt="Rainy" id="weatherImage">
+                }
+                else if (Icon == "thunderstorm")
+                {
+                    <img src="thunderstorm.png" alt="Thunderstorm" id="weatherImage">
+                }
+                else if (Icon == "clear-night")
+                {
+                    <img src="clear-night.png" alt="Clear Night" id="weatherImage">
+                }
+                else if (Icon == "cloudy-night")
+                {
+                    <img src="cloudy-night.png" alt="Cloudy Night" id="weatherImage">
                 }
                 <span class="value" id="temperature">@Temperature °C</span>
             </div>
@@ -474,17 +490,33 @@
         _humidity = _currentWeather?.weather?.Humidity;
         DewPoint = _currentWeather?.weather?.DewPoint;
         CloudCover = _currentWeather?.weather?.CloudCover;
-        if (_currentWeather?.weather?.Icon == "sunny")
+        if (_currentWeather?.weather?.Icon == "clear-day")
         {
             Icon = "sunny";
         }
-        else if (_currentWeather?.weather?.Icon == "cloudy" || _currentWeather?.weather?.Icon == "partly-cloudy-day")
+        else if (_currentWeather?.weather?.Icon == "cloudy")
         {
             Icon = "cloudy";
         }
-        else
+        else if (_currentWeather?.weather?.Icon == "rainy")
         {
             Icon = "rainy";
+        }
+        else if (_currentWeather?.weather?.Icon == "partly-cloudy-day")
+        {
+            Icon = "partly-cloudy";
+        }
+        else if (_currentWeather?.weather?.Icon == "thunderstorm")
+        {
+            Icon = "thunderstorm";
+        }
+        else if (_currentWeather?.weather?.Icon == "clear-night")
+        {
+            Icon = "clear-night";
+        }
+        else if (_currentWeather?.weather?.Icon == "partly-cloudy-night")
+        {
+            Icon = "cloudy-night";
         }
     }
 }

@@ -11,6 +11,32 @@
     <PackageReference Include="Syncfusion.Blazor.Navigations" Version="25.1.35" />
     <PackageReference Include="Syncfusion.Blazor.Themes" Version="25.1.35" />
 </ItemGroup>
+<ItemGroup>
+  <Content Update="wwwroot\clear-night.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Update="wwwroot\cloudy-night.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Update="wwwroot\cloudy.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Update="wwwroot\favicon.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Update="wwwroot\partly-cloudy.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Update="wwwroot\rainy.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Update="wwwroot\sunny.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Update="wwwroot\thunderstorm.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+</ItemGroup>
 
   
 
