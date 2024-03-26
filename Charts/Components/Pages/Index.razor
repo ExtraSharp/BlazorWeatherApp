@@ -130,15 +130,8 @@
         public double Y { get; set; }
     }
 
-    public List<ChartData> MaximumTemperatures = new List<ChartData>
-    {
-       
-    };
-
-    public List<ChartData> MinimumTemperatures = new List<ChartData>
-    {
-
-    };
+    private List<ChartData> MaximumTemperatures = new List<ChartData>{};
+    private List<ChartData> MinimumTemperatures = new List<ChartData>{};
 
    private WeatherResponseModel? _currentWeather;
     private string? _stationName;
