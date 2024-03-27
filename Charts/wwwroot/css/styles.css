@@ -140,9 +140,9 @@ li {
 }
 
     .input-section input[type="text"] {
-        width: calc(25% - 5px);
-        padding: 10px;
-        margin-right: 15px;
+        width: calc(20% - 5px);
+        padding: 5px;
+        margin-right: 10px;
         border-radius: 5px;
         border: 1px solid #ccc;
     }
