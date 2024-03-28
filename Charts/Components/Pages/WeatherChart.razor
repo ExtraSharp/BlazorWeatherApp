@@ -12,30 +12,30 @@
     </ChartAxes>
 
     <ChartTooltipSettings Enable="true" Shared="true">
-        <Template>
+        @* <Template>
             @{
                 var data = context as List<ChartTooltipInfo>;
                 <div>
                     <table style="width:100%;  border: 0px solid black; background-color: rgba(255, 255, 255, 0.7); padding: 10px;" class="table-borderless">
                         <tr>
-                            <th colspan="2">@data[0].X</th>
+                            <th colspan="2">@data?[0].X</th>
                         </tr>
                         <tr style="">
                             <td style="text-align: left;">Max Temperature in °C</td>
-                            <td style="text-align: right;">@data[0].High</td>
+                            <td style="text-align: right;">@data?[0].High</td>
                         </tr>
                         <tr>
                             <td style="text-align: left;">Min Temperature in °C</td>
-                            <td style="text-align: right;">@data[0].Low</td>
+                            <td style="text-align: right;">@data?[0].Low</td>
                         </tr>
-                        <tr>
-                            <td style="text-align: left;">Precipitation in mm</td>
-                            <td style="text-align: right;">@data[1].Y</td>
-                        </tr>
+                        // <tr>
+                        //     <td style="text-align: left;">Precipitation in mm</td>
+                        //     <td style="text-align: right;">@data[1].Y</td>
+                        // </tr>
                     </table>
                 </div>
             }
-        </Template>
+        </Template> *@
     </ChartTooltipSettings>
     
     <ChartSeriesCollection>
