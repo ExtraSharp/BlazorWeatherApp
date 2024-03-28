@@ -42,6 +42,11 @@
         {
             <button @onclick="RefreshData" type="button" class="btn btn-primary">Refresh</button>
         }
+        @if (IsDataAvailable == false)
+        {
+            <br />
+            <span style="color: red">Please choose coordinates inside Germany.</span>
+        }
     </div>
 
     <div class="weather-container">
@@ -168,7 +173,7 @@
     private int ViewportHeight { get; set; }
     private WeatherResponseModel? CurrentWeather { get; set; }
     private string? StationName { get; set; }
-    
+    private bool IsDataAvailable { get; set; } = true;
     private double RecordHigh { get; set; }
     private double MaxTemp { get; set; }
     private int RecordLowYear { get; set; }
@@ -251,15 +256,7 @@
         Latitude = "51.04";
         Longitude = "13.74";
 
-        CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
-
-        if (CurrentWeather != null)
-        {
-            AssignValues();
-        }
-
-        await GetDisplayData();
-        await GetChartData();
+        await RefreshData();
     }
 
     private async Task GetDisplayData()
@@ -341,6 +338,8 @@
 
     private async Task RefreshData()
     {
+        CurrentWeather = null;
+        
         // Validate latitude and longitude inputs
         if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude))
         {
@@ -348,14 +347,30 @@
             return;
         }
 
-        CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
+        if (IsValidCoordinates())
+        {
+            CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
+        }
 
-        if (CurrentWeather != null)
+        if (CurrentWeather is { weather: not null })
         {
             AssignValues();
+            await GetDisplayData();
+            await GetChartData();
+            IsDataAvailable = true;
         }
-        await GetDisplayData();
-        await GetChartData();
+        else
+        {
+            IsDataAvailable = false;
+        }
+    }
+
+    private bool IsValidCoordinates()
+    {
+        var latitude = double.Parse(Latitude);
+        var longitude = double.Parse(Longitude);
+        
+        return latitude is <= 90 and >= -90 && longitude is <= 180 and >= -180;
     }
 
     private static List<DayModel> CalculateDailyMeans(MultipleWeatherResponseModel mergedResponse)
