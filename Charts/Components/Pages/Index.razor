@@ -266,7 +266,6 @@
         var entireMonth = await FetchEntireMonth();
         var dayModels = CreateDayModels(entireMonth);
         var groupedDayModels = GroupDayModels(dayModels);
-        await Task.Delay(500);
 
         PopulateChartData(groupedDayModels);
     }
