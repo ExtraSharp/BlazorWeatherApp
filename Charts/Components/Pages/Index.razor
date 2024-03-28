@@ -6,12 +6,9 @@
 @rendermode InteractiveServer
 
 @* Todo
-- check long/lat data
-- when no data found
 - another data point instead of temp
 - link to long/lat picker
 - footer w/ copyright
-- restructrue methods
 - month length (axis label) check
 - move fetching classes to new WeatherService
 
@@ -269,6 +266,7 @@
         var entireMonth = await FetchEntireMonth();
         var dayModels = CreateDayModels(entireMonth);
         var groupedDayModels = GroupDayModels(dayModels);
+        await Task.Delay(500);
 
         PopulateChartData(groupedDayModels);
     }
@@ -328,7 +326,7 @@
 
         foreach (var day in groupedDayModels)
         {
-            Temperatures.Add(new ChartData2 { X = day.Day.ToString(), High = day.MaxTemp, Low = day.MinTemp, Precipitation = day.Precipitation}); 
+            Temperatures.Add(new ChartData2 { X = day.Day.ToString(), High = day.MaxTemp, Low = day.MinTemp, Precipitation = day.Precipitation });
             MaximumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MaxTemp });
             MinimumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MinTemp });
         }
