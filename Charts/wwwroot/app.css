@@ -28,8 +28,11 @@ app {
     height: 3.5rem;
     display: flex;
     align-items: center;
+}
 
-
+.footer {
+    padding: 20px;
+    text-align: center;
 }
 
 .main {
