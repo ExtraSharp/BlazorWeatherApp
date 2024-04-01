@@ -7,7 +7,6 @@
 @* Todo
 - another data point instead of temp
 - link to long/lat picker
-- move fetching classes to new WeatherService
 *@
 
 <PageTitle>Blazor Weather App</PageTitle>
@@ -21,9 +20,7 @@
             dotnetHelper.invokeMethodAsync('OnResize', window.innerWidth, window.innerHeight);
         });
     }
-</script>
 
-<script>
     var lockResolver;
     if (navigator && navigator.locks && navigator.locks.request) {
         const promise = new Promise((res) => {
@@ -247,6 +244,7 @@
     {
         SetInitialCoordinates();
         _weatherService = new WeatherService(Latitude, Longitude);
+
         await RefreshData();
     }
 
@@ -255,6 +253,7 @@
         if (firstRender)
         {
             await Js.InvokeVoidAsync("window.registerViewportChangeCallback", DotNetObjectReference.Create(this));
+            // var dimension = await Js.InvokeAsync<WindowDimension>("getWindowDimensions");
         }
     }
 
