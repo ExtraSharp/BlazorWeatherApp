@@ -1,5 +1,5 @@
-﻿using Charts;
-using Charts.Components;
+﻿using Charts.Components;
+using Server;
 using Syncfusion.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);

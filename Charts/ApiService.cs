@@ -1,7 +1,7 @@
-﻿using Charts.Models;
-using RestSharp;
+﻿using RestSharp;
+using Server.Models;
 
-namespace Charts;
+namespace Server;
 public class ApiService
 {
     private readonly RestClient _client;

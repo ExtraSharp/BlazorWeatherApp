@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Charts.Models;
+namespace Server.Models;
 
 public class MultipleWeatherResponseModel
 {

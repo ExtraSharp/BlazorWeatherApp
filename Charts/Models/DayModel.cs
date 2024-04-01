@@ -1,4 +1,4 @@
-﻿namespace Charts.Models;
+﻿namespace Server.Models;
 
 public class DayModel
 {

@@ -1,6 +1,6 @@
-﻿using Charts.Models;
+﻿using Server.Models;
 
-namespace Charts;
+namespace Server;
 
 public class WeatherService(string latitude, string longitude)
 {
