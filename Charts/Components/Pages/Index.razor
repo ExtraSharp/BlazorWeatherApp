@@ -111,6 +111,7 @@
                     <span class="label">Cloud Cover:</span>
                     <span class="value" id="cloudCover">@CloudCover %</span>
                 </div>
+                <span class="last-update">(Last updated: @LastUpdatedTime)</span>
             </div>
         }
     </div>
@@ -154,7 +155,8 @@
         public double Precipitation { get; set; }
     }
     #region Private Members
-
+    private DateTime? LastUpdated { get; set; }
+    private string? LastUpdatedTime => LastUpdated?.ToString("HH:mm");
     private WeatherService _weatherService;
     private string Width { get; set; } = "730";
     private List<ChartData> MaximumTemperatures = [];
@@ -211,7 +213,7 @@
         switch (ViewportWidth)
         {
             case < 410:
-                Width = "250";
+                Width = "270";
                 displayIcon = true;
                 break;
             case < 468:
@@ -416,6 +418,7 @@
         _humidity = CurrentWeather?.weather?.Humidity;
         DewPoint = CurrentWeather?.weather?.DewPoint;
         CloudCover = CurrentWeather?.weather?.CloudCover;
+        LastUpdated = CurrentWeather?.weather?.TimeStamp;
         
         SetWeatherLogo();
     }

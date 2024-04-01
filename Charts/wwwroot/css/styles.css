@@ -62,7 +62,7 @@ h4 {
     margin-bottom: 20px;
 }
 
-    .current-temp img {
+ .current-temp img {
         width: 100px;
         margin-bottom: 10px;
     }
@@ -92,6 +92,12 @@ h4 {
     margin-left: 5px;
     font-weight: bold;
     color: #336699;
+}
+
+.last-update {
+    margin-left: 5px;
+    font-weight: bold;
+    color: #337799;
 }
 
 .historical-averages h2 {
