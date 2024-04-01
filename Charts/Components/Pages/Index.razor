@@ -243,8 +243,7 @@
     protected override async Task OnInitializedAsync()
     {
         SetInitialCoordinates();
-        _weatherService = new WeatherService(Latitude, Longitude);
-
+       
         await RefreshData();
     }
 
@@ -298,6 +297,7 @@
     private async Task RefreshData()
     {
         CurrentWeather = null;
+        _weatherService = new WeatherService(Latitude, Longitude);
 
         // Validate latitude and longitude inputs
         if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude))
