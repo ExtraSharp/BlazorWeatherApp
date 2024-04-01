@@ -111,7 +111,7 @@
                     <span class="label">Cloud Cover:</span>
                     <span class="value" id="cloudCover">@CloudCover %</span>
                 </div>
-                <span class="last-update">(Last updated: @LastUpdated)</span>
+                <span class="last-update">(Last updated: @LastUpdatedTime)</span>
             </div>
         }
     </div>
@@ -155,24 +155,21 @@
         public double Precipitation { get; set; }
     }
     #region Private Members
-    private DateTime LastUpdated { get; set; }
+    private DateTime? LastUpdated { get; set; }
     private string LastUpdatedTime
     {
         get
         {
-            
+            if (LastUpdated.HasValue)
+            {
                 // Convert to CET timezone
-                DateTime databaseUtcTime = new DateTime(2016, 8, 15, 10, 20, 0, DateTimeKind.Utc);
-                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time");
-                DateTime testDateTime = TimeZoneInfo.ConvertTimeFromUtc(LastUpdated, timeZone);
-
-                if(testDateTime.IsDaylightSavingTime())
-                {
-                    testDateTime = testDateTime.AddHours(-1);
-                }
-
-                return testDateTime.ToString();
-            
+                DateTime cetTime = LastUpdated.Value.ToLocalTime();;
+                return cetTime.ToString("HH:mm");
+            }
+            else
+            {
+                return null;
+            }
         }
     }
     private WeatherService _weatherService;
@@ -436,7 +433,7 @@
         _humidity = CurrentWeather?.weather?.Humidity;
         DewPoint = CurrentWeather?.weather?.DewPoint;
         CloudCover = CurrentWeather?.weather?.CloudCover;
-        LastUpdated = CurrentWeather.weather.TimeStamp;
+        LastUpdated = CurrentWeather?.weather?.TimeStamp;
         
         SetWeatherLogo();
     }
