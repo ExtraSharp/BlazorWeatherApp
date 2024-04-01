@@ -37,7 +37,7 @@
     <div class="input-section">
         Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
         Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
-        @if (displayIcon)
+        @if (_displayIcon)
         {
             <button @onclick="RefreshData" type="button" class="btn btn-primary" style="font-family: Lucida Sans Unicode;">&#x21bb;</button>
         }
@@ -126,7 +126,7 @@
     </div>
 
     <div class="historical-averages">
-        <h3>Historical Data for @System.DateTime.Now.ToString("dd MMM")</h3>
+        <h3>Historical Data for @DateTime.Now.ToString("dd MMM")</h3>
         <ul>
             <li>
                 <span class="label">Mean Daily Maximum: </span>
@@ -172,19 +172,6 @@
 
 @code {
 
-    public class ChartData
-    {
-        public string X { get; set; }
-        public double Y { get; set; }
-    }
-    public class ChartData2
-    {
-        public string X { get; set; }
-        public double High { get; set; }
-        public double Low { get; set; }
-        public double Precipitation { get; set; }
-    }
-
     #region Private Members
     private DateTime LastUpdated { get; set; }
     private string LastUpdatedTime
@@ -195,11 +182,9 @@
             return cstTime.ToString("HH:mm");
         }
     }
-    private WeatherService _weatherService;
+    private WeatherService? _weatherService;
     private string Width { get; set; } = "730";
-    private List<ChartData> MaximumTemperatures = [];
-    private List<ChartData> MinimumTemperatures = [];
-    private List<ChartData2> Temperatures = [];
+    private List<ChartDataModel> Temperatures = [];
     private int ViewportWidth { get; set; }
     private int ViewportHeight { get; set; }
     private WeatherResponseModel? CurrentWeather { get; set; }
@@ -217,8 +202,8 @@
     private double? CloudCover { get; set; }
     private string Latitude { get; set; }
     private string Longitude { get; set; }
-    private string Icon { get; set; }
-    private static Boolean bigWindowSize = true;
+    private string? Icon { get; set; }
+    private static bool _bigWindowSize = true;
 
     private double? _temperature;
     private double? Temperature
@@ -228,8 +213,7 @@
     }
     private double? _humidity;
 
-    bool displayIcon = false; 
-
+    bool _displayIcon = false; 
 
     private double? _dewPoint;
     private double? DewPoint
@@ -268,27 +252,27 @@
         {
             case < 410:
                 Width = "270";
-                displayIcon = true;
+                _displayIcon = true;
                 break;
             case < 468:
                 Width = "300";
-                displayIcon = false;
+                _displayIcon = false;
                 break;
             case < 769:
                 Width = "500";
-                displayIcon = false;
+                _displayIcon = false;
                 break;
             case < 1000:
                 Width = "730";
-                displayIcon = false;
+                _displayIcon = false;
                 break;
             case >= 1000:
                 Width = "730";
-                displayIcon = false;
+                _displayIcon = false;
                 break;
             default:
                 Width = "730";
-                displayIcon = false;
+                _displayIcon = false;
                 break;
         }
         StateHasChanged();
@@ -297,21 +281,18 @@
     private async Task RefreshData()
     {
         CurrentWeather = null;
-        _weatherService = new WeatherService(Latitude, Longitude);
 
-        // Validate latitude and longitude inputs
-        if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude))
+        if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude) || !IsValidCoordinates())
         {
-            // Handle validation error
+            // Handle validation errors
             return;
         }
 
-        if (IsValidCoordinates())
-        {
-            CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
-        }
+        _weatherService = new WeatherService(Latitude, Longitude); 
 
-        if (CurrentWeather is { weather: not null })
+        CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
+
+        if (CurrentWeather?.weather != null) 
         {
             AssignValues();
             await GetHistoricDataForToday();
@@ -340,29 +321,31 @@
 
     private async Task GetHistoricDataForToday()
     {
-        var weatherData = await _weatherService.GetWeatherDataForDisplay();
+        if (_weatherService != null)
+        {
+            var weatherData = await _weatherService.GetWeatherDataForDisplay();
 
-        DisplayDailyMeans(weatherData);
+            DisplayDailyMeans(weatherData);
+        }
     }
 
     private async Task GetChartData()
     {
-        var weatherData = await _weatherService.GetChartDataForDisplay();
+        if (_weatherService != null)
+        {
+            var weatherData = await _weatherService.GetChartDataForDisplay();
 
-        PopulateChartData(weatherData);
+            PopulateChartData(weatherData);
+        }
     }
 
     private void PopulateChartData(IReadOnlyCollection<DayModel> groupedDayModels)
     {
-        MaximumTemperatures.Clear();
-        MinimumTemperatures.Clear();
         Temperatures.Clear();
 
         foreach (var day in groupedDayModels)
         {
-            Temperatures.Add(new ChartData2 { X = day.Day.ToString(), High = day.MaxTemp, Low = day.MinTemp, Precipitation = day.Precipitation });
-            MaximumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MaxTemp });
-            MinimumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MinTemp });
+            Temperatures.Add(new ChartDataModel { X = day.Day.ToString(), High = day.MaxTemp, Low = day.MinTemp, Precipitation = day.Precipitation });
         }
     }
     

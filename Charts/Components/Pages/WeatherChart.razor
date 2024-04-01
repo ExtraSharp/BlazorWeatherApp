@@ -1,5 +1,6 @@
 ﻿@page "/WeatherChart"
 @using Syncfusion.Blazor.Charts
+@using Server.Models
 
 
 <SfChart Width="@Width">
@@ -53,6 +54,6 @@
 </SfChart>
 
 @code {
-    [Parameter] public List<Index.ChartData2> Temperatures { get; set; } 
+    [Parameter] public List<ChartDataModel> Temperatures { get; set; } 
     [Parameter] public string Width { get; set; } = "100%"; // Example parameter
 }

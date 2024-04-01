@@ -5,8 +5,6 @@ namespace Server;
 public class WeatherService(string latitude, string longitude)
 {
     private readonly ApiService _apiService = new();
-    private readonly string _latitude = latitude;
-    private readonly string _longitude = longitude;
 
     public async Task<IReadOnlyCollection<DayModel>> GetChartDataForDisplay()
     {
@@ -82,7 +80,7 @@ public class WeatherService(string latitude, string longitude)
             var firstDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month, 1);
             var lastDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month + 1, 1);
 
-            tasks.Add(_apiService.GetMonthlyData(firstDayOfMonth.ToString("yyyy-MM-dd"), lastDayOfMonth.ToString("yyyy-MM-dd"), _latitude, _longitude));
+            tasks.Add(_apiService.GetMonthlyData(firstDayOfMonth.ToString("yyyy-MM-dd"), lastDayOfMonth.ToString("yyyy-MM-dd"), latitude, longitude));
 
             // Loop for going back year by year
             for (var i = 1; i <= 20; i++)
@@ -90,7 +88,7 @@ public class WeatherService(string latitude, string longitude)
                 var yearToSubtract = desiredDate.Year - i;
                 var firstDayOfYear = new DateTime(yearToSubtract, desiredDate.Month, 1);
                 var lastDayOfYear = new DateTime(yearToSubtract, desiredDate.Month + 1, 1);
-                tasks.Add(_apiService.GetMonthlyData(firstDayOfYear.ToString("yyyy-MM-dd"), lastDayOfYear.ToString("yyyy-MM-dd"), _latitude, _longitude));
+                tasks.Add(_apiService.GetMonthlyData(firstDayOfYear.ToString("yyyy-MM-dd"), lastDayOfYear.ToString("yyyy-MM-dd"), latitude, longitude));
             }
         }
         else
@@ -98,14 +96,14 @@ public class WeatherService(string latitude, string longitude)
             for (var i = 0; i < 20; i++)
             {
                 var dateString = desiredDate.AddYears(-i).ToString("yyyy-MM-dd");
-                tasks.Add(_apiService.GetHistoricalWeatherData(dateString, _latitude, _longitude));
+                tasks.Add(_apiService.GetHistoricalWeatherData(dateString, latitude, longitude));
             }
         }
 
         return await Task.WhenAll(tasks);
     }
 
-    private MultipleWeatherResponseModel MergeWeatherResponses(IEnumerable<MultipleWeatherResponseModel?> responses, int day)
+    private static MultipleWeatherResponseModel MergeWeatherResponses(IEnumerable<MultipleWeatherResponseModel?> responses, int day)
     {
         var mergedResponse = new MultipleWeatherResponseModel();
 
