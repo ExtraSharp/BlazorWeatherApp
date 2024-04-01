@@ -155,21 +155,13 @@
         public double Precipitation { get; set; }
     }
     #region Private Members
-    private DateTime? LastUpdated { get; set; }
+    private DateTime LastUpdated { get; set; }
     private string LastUpdatedTime
     {
         get
         {
-            if (LastUpdated.HasValue)
-            {
-                // Convert to CET timezone
-                DateTime cetTime = LastUpdated.Value.ToLocalTime();;
-                return cetTime.ToString("HH:mm");
-            }
-            else
-            {
-                return null;
-            }
+                var cstTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(LastUpdated, "Central European Standard Time");
+                return cstTime.ToString();
         }
     }
     private WeatherService _weatherService;
@@ -433,7 +425,7 @@
         _humidity = CurrentWeather?.weather?.Humidity;
         DewPoint = CurrentWeather?.weather?.DewPoint;
         CloudCover = CurrentWeather?.weather?.CloudCover;
-        LastUpdated = CurrentWeather?.weather?.TimeStamp;
+        LastUpdated = CurrentWeather.weather.TimeStamp;
         
         SetWeatherLogo();
     }
