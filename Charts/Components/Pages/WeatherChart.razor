@@ -2,42 +2,42 @@
 @using Syncfusion.Blazor.Charts
 
 
-<SfChart Width="@Width" >
+<SfChart Width="@Width">
     <ChartPrimaryXAxis Title="Day" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Hide">
         <ChartAxisMajorGridLines Width="0" Color="blue" />
     </ChartPrimaryXAxis>
     <ChartPrimaryYAxis Title="Temperatures"></ChartPrimaryYAxis>
     <ChartAxes>
-        <ChartAxis Name="YAxis" OpposedPosition="true" Title="Precipitation in mm"/>
+        <ChartAxis Name="YAxis" OpposedPosition="true" Title="Precipitation in mm" />
     </ChartAxes>
 
     <ChartTooltipSettings Enable="true" Shared="true">
         @* <Template>
-            @{
-                var data = context as List<ChartTooltipInfo>;
-                <div>
-                    <table style="width:100%;  border: 0px solid black; background-color: rgba(255, 255, 255, 0.7); padding: 10px;" class="table-borderless">
-                        <tr>
-                            <th colspan="2">@data?[0].X</th>
-                        </tr>
-                        <tr style="">
-                            <td style="text-align: left;">Max Temperature in °C</td>
-                            <td style="text-align: right;">@data?[0].High</td>
-                        </tr>
-                        <tr>
-                            <td style="text-align: left;">Min Temperature in °C</td>
-                            <td style="text-align: right;">@data?[0].Low</td>
-                        </tr>
-                        <tr>
-                            <td style="text-align: left;">Precipitation in mm</td>
-                            <td style="text-align: right;">@data[1].Y</td>
-                        </tr>
-                    </table>
-                </div>
-            }
+        @{
+        var data = context as List<ChartTooltipInfo>;
+        <div>
+        <table style="width:100%;  border: 0px solid black; background-color: rgba(255, 255, 255, 0.7); padding: 10px;" class="table-borderless">
+        <tr>
+        <th colspan="2">@data?[0].X</th>
+        </tr>
+        <tr style="">
+        <td style="text-align: left;">Max Temperature in °C</td>
+        <td style="text-align: right;">@data?[0].High</td>
+        </tr>
+        <tr>
+        <td style="text-align: left;">Min Temperature in °C</td>
+        <td style="text-align: right;">@data?[0].Low</td>
+        </tr>
+        <tr>
+        <td style="text-align: left;">Precipitation in mm</td>
+        <td style="text-align: right;">@data[1].Y</td>
+        </tr>
+        </table>
+        </div>
+        }
         </Template> *@
     </ChartTooltipSettings>
-    
+
     <ChartSeriesCollection>
         <ChartSeries DataSource="@Temperatures" XName="X" High="High" Low="Low" Type="ChartSeriesType.RangeArea" Width="2" Fill="red" Opacity="0.1">
             <ChartMarker Visible="true" Height="5" Width="5" Shape="ChartShape.Circle" IsFilled="true" />
@@ -45,11 +45,11 @@
         <ChartSeries DataSource="@Temperatures" XName="X" YName="Precipitation" Type="ChartSeriesType.Column" YAxisName="YAxis" Fill="#FEC007" ColumnWidth="1.5">
         </ChartSeries>
         @* <ChartSeries DataSource="@MinimumTemperatures" XName="X" YName="Y" Type="ChartSeriesType.Area" Width="2" Fill="blue" Opacity="0.1">
-            <ChartMarker Visible="true" Height="5" Width="5" Shape="ChartShape.Circle" IsFilled="true" />
+        <ChartMarker Visible="true" Height="5" Width="5" Shape="ChartShape.Circle" IsFilled="true" />
         </ChartSeries> *@
     </ChartSeriesCollection>
 
-    <ChartLegendSettings Visible="true" Position="LegendPosition.Top" />
+    @* <ChartLegendSettings Visible="true" Position="LegendPosition.Top" />  *@
 </SfChart>
 
 @code {

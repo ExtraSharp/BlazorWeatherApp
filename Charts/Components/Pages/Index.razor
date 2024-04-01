@@ -25,6 +25,24 @@
     }
 </script>
 
+<script>
+    window.getCoords = async () => {
+        const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        document.getElementById("SearchPoint").value = pos.coords.latitude + ', ' + pos.coords.longitude
+
+        if ("createEvent" in document) {
+            var evt = document.createEvent("HTMLEvents");
+            evt.initEvent("change", false, true);
+            document.getElementById("SearchPoint").dispatchEvent(evt);
+        }
+        else
+            document.getElementById("SearchPoint").fireEvent("onchange");
+
+    };
+</script>
+
 <div class="container">
     <div class="input-section">
         Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
@@ -92,12 +110,12 @@
                 <div class="data-item">
                     <i class="fas fa-thermometer-half"></i>
                     <span class="label">Temperature:</span>
-                    <span class="value" id="temperature">@Temperature°C</span>
+                    <span class="value" id="temperature">@Temperature °C</span>
                 </div>
                 <div class="data-item">
                     <i class="fas fa-tint"></i>
                     <span class="label">Dew Point:</span>
-                    <span class="value" id="dewpoint">@(DewPoint)°C</span>
+                    <span class="value" id="dewpoint">@(DewPoint) °C</span>
                 </div>
             </div>
 
@@ -125,8 +143,8 @@
             <li>Mean Daily Minimum: @MinTemp.ToString("F1") °C</li>
             <li>Precipitation: @Precipitation.ToString("F1") mm</li>
             <li>Sunshine Hours: @SunshineHours.ToString("F1") hours</li>
-            <li>Record High: @RecordHigh.ToString("F1") °C (@RecordHighYear)</li>
-            <li>Record Low: @RecordLow.ToString("F1") °C (@RecordLowYear)</li>
+            <li>Record High: @RecordHigh.ToString("F1")°C (@RecordHighYear)</li>
+            <li>Record Low: @RecordLow.ToString("F1")°C (@RecordLowYear)</li>
         </ul>
     </div>
     
@@ -244,6 +262,13 @@
         StateHasChanged();
     }
 
+    private async Task GetLocation()
+    {
+        (double longitude, double latitude) = await Js.InvokeAsync<(double, double)>("getCoords");
+        Longitude = longitude.ToString();
+        Latitude = latitude.ToString();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -256,7 +281,8 @@
     {
         SetInitialCoordinates();
         _weatherService = new WeatherService(Latitude, Longitude);
-
+        
+        GetLocation();
         await RefreshData();
     }
 
