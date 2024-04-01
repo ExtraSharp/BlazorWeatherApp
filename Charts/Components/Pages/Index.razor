@@ -156,18 +156,22 @@
     }
     #region Private Members
     private DateTime? LastUpdated { get; set; }
-    // private string LastUpdatedTime
-    // {
-    //     get
-    //     {
-    //         if (LastUpdated.HasValue)
-    //         {
-    //             // Convert to CET timezone
-    //             DateTime cetTime = TimeZoneInfo.ConvertTimeFromUtc(LastUpdated.Value, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
-    //             return cetTime.ToString("HH:mm");
-    //         }
-    //     }
-    // }
+    private string LastUpdatedTime
+    {
+        get
+        {
+            if (LastUpdated.HasValue)
+            {
+                // Convert to CET timezone
+                DateTime cetTime = LastUpdated.Value.ToLocalTime();;
+                return cetTime.ToString("HH:mm");
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
     private WeatherService _weatherService;
     private string Width { get; set; } = "730";
     private List<ChartData> MaximumTemperatures = [];
