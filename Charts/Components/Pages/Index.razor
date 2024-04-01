@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using Charts.Models
 @using Syncfusion.Blazor.Charts
+@using System.Globalization
 @inject ApiService ApiService
 @inject IJSRuntime Js
 @rendermode InteractiveServer
@@ -160,8 +161,8 @@
     {
         get
         {
-                var cstTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(LastUpdated, "Central European Standard Time");
-                return cstTime.ToString();
+            var cstTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(LastUpdated, "Central European Standard Time");
+            return cstTime.ToString("HH:mm");
         }
     }
     private WeatherService _weatherService;
