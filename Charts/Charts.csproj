@@ -5,6 +5,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="SegMDL2.ttf" />
+  </ItemGroup>
 <ItemGroup>
 	    <PackageReference Include="RestSharp" Version="110.2.1-alpha.0.16" />
 	    <PackageReference Include="Syncfusion.Blazor.Charts" Version="25.1.35" />
@@ -34,6 +38,9 @@
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
   <Content Update="wwwroot\images\thunderstorm.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Update="wwwroot\SegMDL2.ttf">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
 </ItemGroup>

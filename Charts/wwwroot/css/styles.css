@@ -1,4 +1,9 @@
 ﻿/* Common styles */
+@font-face {
+    font-family: 'Segoe MDL2 Assets';
+    src: url('/SegoeMDL2Assets.ttf') format('truetype');
+}
+
 body {
     font-family: Arial, sans-serif;
     text-align: center;
