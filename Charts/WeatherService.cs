@@ -8,8 +8,65 @@ public class WeatherService(string latitude, string longitude)
     private readonly string _latitude = latitude;
     private readonly string _longitude = longitude;
 
-    public async Task<IReadOnlyCollection<DayModel>> GetWeatherDataForDisplay(DateTime desiredDate)
+    public async Task<IReadOnlyCollection<DayModel>> GetChartDataForDisplay()
     {
+        var entireMonth = await FetchEntireMonth();
+        var dayModels = CreateDayModels(entireMonth);
+
+        return GroupDayModels(dayModels);
+    }
+
+    private async Task<List<WeatherModel>> FetchEntireMonth()
+    {
+        var today = DateTime.Today;
+        var desiredDate = new DateTime(today.Year, today.Month, today.Day);
+
+        var responses = await FetchHistoricalWeatherData(desiredDate, true);
+
+        return responses
+            .Where(r => r != null)
+            .SelectMany(r => r.weather ?? Enumerable.Empty<WeatherModel>())
+            .Where(weather => weather.TimeStamp.Month == today.Month) // Filter by month
+            .ToList();
+    }
+
+    private static IEnumerable<DayModel> CreateDayModels(IEnumerable<WeatherModel> mergedList)
+    {
+        return mergedList
+            .Where(weather => weather.Temperature.HasValue)
+            .GroupBy(weather => new { Day = weather.TimeStamp.Day, Month = weather.TimeStamp.Month, Year = weather.TimeStamp.Year })
+            .Select(group => new DayModel
+            {
+                Day = group.First().TimeStamp.Day,
+                Month = group.First().TimeStamp.Month,
+                Year = group.First().TimeStamp.Year,
+                MaxTemp = (double)group.Max(weather => weather.Temperature),
+                MinTemp = (double)group.Min(weather => weather.Temperature),
+                Precipitation = group.Average(weather => weather.Precipitation ?? double.MinValue)
+                // Include other properties as needed
+            })
+            .ToList();
+    }
+
+    private static List<DayModel> GroupDayModels(IEnumerable<DayModel> dayModels)
+    {
+        return dayModels
+            .GroupBy(dayModel => dayModel.Day)
+            .Select(group => new DayModel
+            {
+                Day = group.Key,
+                MaxTemp = group.Average(dayModel => dayModel.MaxTemp),
+                MinTemp = group.Average(dayModel => dayModel.MinTemp),
+                Precipitation = group.Sum(dayModel => dayModel.Precipitation)
+                // Include other properties as needed
+            })
+            .ToList();
+    }
+
+    public async Task<IReadOnlyCollection<DayModel>> GetWeatherDataForDisplay()
+    {
+        var desiredDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+
         var responses = await FetchHistoricalWeatherData(desiredDate);
         var mergedResponse = MergeWeatherResponses(responses, desiredDate.Day);
 

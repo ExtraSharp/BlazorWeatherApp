@@ -1,7 +1,5 @@
 ﻿@page "/"
 @using Charts.Models
-@using Syncfusion.Blazor.Charts
-@using System.Globalization
 @inject ApiService ApiService
 @inject IJSRuntime Js
 @rendermode InteractiveServer
@@ -24,7 +22,6 @@
         });
     }
 </script>
-
 
 <div class="container">
     <div class="input-section">
@@ -156,6 +153,7 @@
         public double Low { get; set; }
         public double Precipitation { get; set; }
     }
+
     #region Private Members
     private DateTime LastUpdated { get; set; }
     private string LastUpdatedTime
@@ -198,9 +196,9 @@
         set => _temperature = value.HasValue ? Math.Round(value.Value, 1) : null;
     }
     private double? _humidity;
-     
+
     bool displayIcon = false; 
-    
+
 
     private double? _dewPoint;
     private double? DewPoint
@@ -211,11 +209,27 @@
     #endregion
 
     #region Methods
+    protected override async Task OnInitializedAsync()
+    {
+        SetInitialCoordinates();
+        _weatherService = new WeatherService(Latitude, Longitude);
+
+        await RefreshData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Js.InvokeVoidAsync("window.registerViewportChangeCallback", DotNetObjectReference.Create(this));
+        }
+    }
+
     [JSInvokable]
     public void OnResize(int width, int height)
     {
         if (ViewportWidth == width && ViewportHeight == height) return;
-    
+
         ViewportWidth = width;
         ViewportHeight = height;
 
@@ -245,113 +259,10 @@
         StateHasChanged();
     }
 
-   
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await Js.InvokeVoidAsync("window.registerViewportChangeCallback", DotNetObjectReference.Create(this));
-        }
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        SetInitialCoordinates();
-        _weatherService = new WeatherService(Latitude, Longitude);
-        
-        
-        await RefreshData();
-    }
-
-    private void SetInitialCoordinates()
-    {
-        Latitude = "51.04";
-        Longitude = "13.74";
-    }
-
-    private async Task GetHistoricDataForToday()
-    {
-        var desiredDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
-        var weatherData = await _weatherService.GetWeatherDataForDisplay(desiredDate);
-
-        DisplayDailyMeans(weatherData);
-    }
-
-    private async Task GetChartData()
-    {
-        var entireMonth = await FetchEntireMonth();
-        var dayModels = CreateDayModels(entireMonth);
-        var groupedDayModels = GroupDayModels(dayModels);
-
-        PopulateChartData(groupedDayModels);
-    }
-
-    private async Task<List<WeatherModel>> FetchEntireMonth()
-    {
-        var today = DateTime.Today;
-        var desiredDate = new DateTime(today.Year, today.Month, today.Day);
-
-        var responses = await _weatherService.FetchHistoricalWeatherData(desiredDate, true);
-
-        return responses
-            .Where(r => r != null)
-            .SelectMany(r => r.weather ?? Enumerable.Empty<WeatherModel>())
-            .Where(weather => weather.TimeStamp.Month == today.Month) // Filter by month
-            .ToList();
-    }
-
-    private static IEnumerable<DayModel> CreateDayModels(IEnumerable<WeatherModel> mergedList)
-    {
-        return mergedList
-            .Where(weather => weather.Temperature.HasValue)
-            .GroupBy(weather => new { Day = weather.TimeStamp.Day, Month = weather.TimeStamp.Month, Year = weather.TimeStamp.Year })
-            .Select(group => new DayModel
-                {
-                    Day = group.First().TimeStamp.Day,
-                    Month = group.First().TimeStamp.Month,
-                    Year = group.First().TimeStamp.Year,
-                    MaxTemp = (double)group.Max(weather => weather.Temperature),
-                    MinTemp = (double)group.Min(weather => weather.Temperature),
-                    Precipitation = group.Average(weather => weather.Precipitation ?? double.MinValue)
-                    // Include other properties as needed
-                })
-            .ToList();
-    }
-
-    private static List<DayModel> GroupDayModels(IEnumerable<DayModel> dayModels)
-    {
-        return dayModels
-            .GroupBy(dayModel => dayModel.Day)
-            .Select(group => new DayModel
-                {
-                    Day = group.Key,
-                    MaxTemp = group.Average(dayModel => dayModel.MaxTemp),
-                    MinTemp = group.Average(dayModel => dayModel.MinTemp),
-                    Precipitation = group.Sum(dayModel => dayModel.Precipitation)
-                    // Include other properties as needed
-                })
-            .ToList();
-    }
-
-    private void PopulateChartData(List<DayModel> groupedDayModels)
-    {
-        MaximumTemperatures.Clear();
-        MinimumTemperatures.Clear();
-        Temperatures.Clear();
-
-        foreach (var day in groupedDayModels)
-        {
-            Temperatures.Add(new ChartData2 { X = day.Day.ToString(), High = day.MaxTemp, Low = day.MinTemp, Precipitation = day.Precipitation });
-            MaximumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MaxTemp });
-            MinimumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MinTemp });
-        }
-    }
-
     private async Task RefreshData()
     {
         CurrentWeather = null;
-        
+
         // Validate latitude and longitude inputs
         if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude))
         {
@@ -381,8 +292,42 @@
     {
         var latitude = double.Parse(Latitude);
         var longitude = double.Parse(Longitude);
-        
+
         return latitude is <= 90 and >= -90 && longitude is <= 180 and >= -180;
+    }
+
+    private void SetInitialCoordinates()
+    {
+        Latitude = "51.04";
+        Longitude = "13.74";
+    }
+
+    private async Task GetHistoricDataForToday()
+    {
+        var weatherData = await _weatherService.GetWeatherDataForDisplay();
+
+        DisplayDailyMeans(weatherData);
+    }
+
+    private async Task GetChartData()
+    {
+        var weatherData = await _weatherService.GetChartDataForDisplay();
+
+        PopulateChartData(weatherData);
+    }
+
+    private void PopulateChartData(IReadOnlyCollection<DayModel> groupedDayModels)
+    {
+        MaximumTemperatures.Clear();
+        MinimumTemperatures.Clear();
+        Temperatures.Clear();
+
+        foreach (var day in groupedDayModels)
+        {
+            Temperatures.Add(new ChartData2 { X = day.Day.ToString(), High = day.MaxTemp, Low = day.MinTemp, Precipitation = day.Precipitation });
+            MaximumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MaxTemp });
+            MinimumTemperatures.Add(new ChartData { X = day.Day.ToString(), Y = day.MinTemp });
+        }
     }
     
     private void DisplayDailyMeans(IReadOnlyCollection<DayModel> days)
