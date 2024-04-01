@@ -1,4 +1,4 @@
-﻿using Charts.Components;
+﻿using Server.Components;
 using Server;
 using Syncfusion.Blazor;
 
