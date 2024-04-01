@@ -23,6 +23,19 @@
     }
 </script>
 
+<script>
+    var lockResolver;
+    if (navigator && navigator.locks && navigator.locks.request) {
+        const promise = new Promise((res) => {
+            lockResolver = res;
+        });
+
+        navigator.locks.request('unique_lock_name', { mode: "shared" }, () => {
+            return promise;
+        });
+    }
+</script>
+
 <div class="container">
     <div class="input-section">
         Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
@@ -234,7 +247,6 @@
     {
         SetInitialCoordinates();
         _weatherService = new WeatherService(Latitude, Longitude);
-
         await RefreshData();
     }
 
