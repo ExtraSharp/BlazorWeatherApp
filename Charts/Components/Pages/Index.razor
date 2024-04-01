@@ -83,7 +83,7 @@
                         break;
 
                 }
-                <span class="value" id="temperature">@Temperature °C</span>
+                <span class="label" id="temperature">@Temperature °C</span>
             </div>
 
             <div class="data-group">
@@ -118,13 +118,34 @@
     <div class="historical-averages">
         <h3>Historical Data for @System.DateTime.Now.ToString("dd MMM")</h3>
         <ul>
-            <li>Mean Daily Maximum: @MaxTemp.ToString("F1") °C</li>
-            <li>Daily Mean: @MeanTemp.ToString("F1") °C</li>
-            <li>Mean Daily Minimum: @MinTemp.ToString("F1") °C</li>
-            <li>Precipitation: @Precipitation.ToString("F1") mm</li>
-            <li>Sunshine Hours: @SunshineHours.ToString("F1") hours</li>
-            <li>Record High: @RecordHigh.ToString("F1")°C (@RecordHighYear)</li>
-            <li>Record Low: @RecordLow.ToString("F1")°C (@RecordLowYear)</li>
+            <li>
+                <span class="label">Mean Daily Maximum: </span>
+                <span class="value">@MaxTemp.ToString("F1") °C</span>
+            </li>
+            <li>
+                <span class="label">Daily Mean: </span>
+                <span class="value">@MeanTemp.ToString("F1") °C</span>
+            </li>
+            <li>
+                <span class="label">Mean Daily Minimum: </span>
+                <span class="value">@MinTemp.ToString("F1") °C</span>
+            </li>
+            <li>
+                <span class="label">Precipitation: </span>
+                <span class="value">@Precipitation.ToString("F1") mm</span>
+            </li>
+            <li>
+                <span class="label">Sunshine Hours: </span>
+                <span class="value">@SunshineHours.ToString("F1") hours</span>
+            </li>
+            <li>
+                <span class="label">Record High: </span>
+                <span class="value">@RecordHigh.ToString("F1")°C (@RecordHighYear)</span>
+            </li>
+            <li>
+                <span class="label">Record Low: </span>
+                <span class="value">@RecordLow.ToString("F1")°C (@RecordLowYear)</span>
+            </li>
         </ul>
     </div>
     

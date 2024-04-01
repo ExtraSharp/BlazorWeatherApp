@@ -84,12 +84,13 @@ h4 {
     }
 
 .label {
-    font-weight: bold;
+    font-weight: 700;
     color: #336699;
 }
 
 .value {
     margin-left: 5px;
+    font-weight: 500;
     color: #336699;
 }
 
