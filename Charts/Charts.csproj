@@ -40,9 +40,6 @@
   <Content Update="wwwroot\images\thunderstorm.png">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
-  <Content Update="wwwroot\SegMDL2.ttf">
-    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  </Content>
 </ItemGroup>
 
   
