@@ -1,6 +1,8 @@
-﻿namespace Server.Models;
+﻿using Microsoft.AspNetCore.Components;
 
-public class DayModel
+namespace Server.Models;
+
+public class WeatherDataModel
 {
     public int Day { get; set; }
     public int Month { get; set; }
@@ -10,4 +12,8 @@ public class DayModel
     public double MinTemp { get; set; }
     public double Precipitation { get; set; }
     public double SunshineHours { get; set; }
+    public double RecordHigh { get; set; }
+    public double RecordLow { get; set; }
+    public int RecordLowYear { get; set; }
+    public int RecordHighYear { get; set; }
 }

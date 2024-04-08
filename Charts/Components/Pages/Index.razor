@@ -127,41 +127,12 @@
 
     <div class="historical-averages">
         <h3>Historical Data for @DateTime.Now.ToString("dd MMM")</h3>
-        <ul>
-            <li>
-                <span class="label">Mean Daily Maximum: </span>
-                <span class="value">@MaxTemp.ToString("F1") °C</span>
-            </li>
-            <li>
-                <span class="label">Daily Mean: </span>
-                <span class="value">@MeanTemp.ToString("F1") °C</span>
-            </li>
-            <li>
-                <span class="label">Mean Daily Minimum: </span>
-                <span class="value">@MinTemp.ToString("F1") °C</span>
-            </li>
-            <li>
-                <span class="label">Precipitation: </span>
-                <span class="value">@Precipitation.ToString("F1") mm</span>
-            </li>
-            <li>
-                <span class="label">Sunshine Hours: </span>
-                <span class="value">@SunshineHours.ToString("F1") hours</span>
-            </li>
-            <li>
-                <span class="label">Record High: </span>
-                <span class="value">@RecordHigh.ToString("F1")°C (@RecordHighYear)</span>
-            </li>
-            <li>
-                <span class="label">Record Low: </span>
-                <span class="value">@RecordLow.ToString("F1")°C (@RecordLowYear)</span>
-            </li>
-        </ul>
+        <HistoricalAverages Data="@HistoricalAverages"></HistoricalAverages>
     </div>
     
     <div class="linechart">
         <h3>Mean Temperatures and Precipitation for @DateTime.Now.ToString("MMMM")</h3>
-        <WeatherChart Temperatures="@Temperatures" Width="@Width" />
+        <WeatherChart Temperatures="@Temperatures" Width="@Width" @rendermode="@RenderMode.InteractiveServer" />
     </div>
 
     <div class="get-source-code">
@@ -190,15 +161,7 @@
     private WeatherResponseModel? CurrentWeather { get; set; }
     private string? StationName { get; set; }
     private bool IsDataAvailable { get; set; } = true;
-    private double RecordHigh { get; set; }
-    private double MaxTemp { get; set; }
-    private int RecordLowYear { get; set; }
-    private int RecordHighYear { get; set; }
-    private double MeanTemp { get; set; }
-    private double MinTemp { get; set; }
-    private double Precipitation { get; set; }
-    private double SunshineHours { get; set; }
-    private double RecordLow { get; set; }
+    private WeatherDataModel HistoricalAverages { get; set; } = new();
     private double? CloudCover { get; set; }
     private string Latitude { get; set; }
     private string Longitude { get; set; }
@@ -339,7 +302,7 @@
         }
     }
 
-    private void PopulateChartData(IReadOnlyCollection<DayModel> groupedDayModels)
+    private void PopulateChartData(IReadOnlyCollection<WeatherDataModel> groupedDayModels)
     {
         Temperatures.Clear();
 
@@ -349,19 +312,22 @@
         }
     }
     
-    private void DisplayDailyMeans(IReadOnlyCollection<DayModel> days)
+    private void DisplayDailyMeans(IReadOnlyCollection<WeatherDataModel> days)
     {
         CalculateDailyMeans(days);
         FindRecordHighAndLow(days);
     }
 
-    private void CalculateDailyMeans(IReadOnlyCollection<DayModel> days)
+    private void CalculateDailyMeans(IReadOnlyCollection<WeatherDataModel> days)
     {
-        MeanTemp = CalculateAverage(days, x => x.MeanTemp);
-        MaxTemp = CalculateAverage(days, x => x.MaxTemp);
-        MinTemp = CalculateAverage(days, x => x.MinTemp);
-        Precipitation = CalculateAverage(days, x => x.Precipitation);
-        SunshineHours = CalculateAverage(days, x => x.SunshineHours);
+        HistoricalAverages = new WeatherDataModel
+        {
+            MeanTemp = CalculateAverage(days, x => x.MeanTemp),
+            MaxTemp = CalculateAverage(days, x => x.MaxTemp),
+            MinTemp = CalculateAverage(days, x => x.MinTemp),
+            Precipitation = CalculateAverage(days, x => x.Precipitation),
+            SunshineHours = CalculateAverage(days, x => x.SunshineHours),
+        };
     }
 
     private static double CalculateAverage<T>(IEnumerable<T> collection, Func<T, double> selector)
@@ -369,21 +335,18 @@
         return collection.Average(selector);
     }
 
-    private void FindRecordHighAndLow(IReadOnlyCollection<DayModel> days)
+    private void FindRecordHighAndLow(IReadOnlyCollection<WeatherDataModel> days)
     {
         var recordHighData = days.MaxBy(x => x.MaxTemp);
         var recordLowData = days.MinBy(x => x.MinTemp);
 
         if (recordHighData != null)
         {
-            RecordHigh = recordHighData.MaxTemp;
-            RecordHighYear = recordHighData.Year;
+            HistoricalAverages.RecordHigh = recordHighData.MaxTemp;
+            HistoricalAverages.RecordHighYear = recordHighData.Year;
         }
 
         if (recordHighData == null || recordLowData == null) return;
-
-        RecordLow = recordLowData.MinTemp;
-        RecordLowYear = recordLowData.Year;
     }
 
 

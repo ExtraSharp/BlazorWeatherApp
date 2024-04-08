@@ -6,7 +6,7 @@ public class WeatherService(string latitude, string longitude)
 {
     private readonly ApiService _apiService = new();
 
-    public async Task<IReadOnlyCollection<DayModel>> GetChartDataForDisplay()
+    public async Task<IReadOnlyCollection<WeatherDataModel>> GetChartDataForDisplay()
     {
         var entireMonth = await FetchEntireMonth();
         var dayModels = CreateDayModels(entireMonth);
@@ -28,12 +28,12 @@ public class WeatherService(string latitude, string longitude)
             .ToList();
     }
 
-    private static IEnumerable<DayModel> CreateDayModels(IEnumerable<WeatherModel> mergedList)
+    private static IEnumerable<WeatherDataModel> CreateDayModels(IEnumerable<WeatherModel> mergedList)
     {
         return mergedList
             .Where(weather => weather.Temperature.HasValue)
             .GroupBy(weather => new { Day = weather.TimeStamp.Day, Month = weather.TimeStamp.Month, Year = weather.TimeStamp.Year })
-            .Select(group => new DayModel
+            .Select(group => new WeatherDataModel
             {
                 Day = group.First().TimeStamp.Day,
                 Month = group.First().TimeStamp.Month,
@@ -46,11 +46,11 @@ public class WeatherService(string latitude, string longitude)
             .ToList();
     }
 
-    private static List<DayModel> GroupDayModels(IEnumerable<DayModel> dayModels)
+    private static List<WeatherDataModel> GroupDayModels(IEnumerable<WeatherDataModel> dayModels)
     {
         return dayModels
             .GroupBy(dayModel => dayModel.Day)
-            .Select(group => new DayModel
+            .Select(group => new WeatherDataModel
             {
                 Day = group.Key,
                 MaxTemp = group.Average(dayModel => dayModel.MaxTemp),
@@ -61,7 +61,7 @@ public class WeatherService(string latitude, string longitude)
             .ToList();
     }
 
-    public async Task<IReadOnlyCollection<DayModel>> GetWeatherDataForDisplay()
+    public async Task<IReadOnlyCollection<WeatherDataModel>> GetWeatherDataForDisplay()
     {
         var desiredDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
 
@@ -120,12 +120,12 @@ public class WeatherService(string latitude, string longitude)
         return mergedResponse;
     }
 
-    private static List<DayModel> CalculateDailyMeans(MultipleWeatherResponseModel mergedResponse)
+    private static List<WeatherDataModel> CalculateDailyMeans(MultipleWeatherResponseModel mergedResponse)
     {
         var groupedByDay = mergedResponse.weather
             .GroupBy(w => w.TimeStamp.Date);
 
-        return groupedByDay.Select(group => new DayModel
+        return groupedByDay.Select(group => new WeatherDataModel
             {
                 Day = group.Key.Day,
                 Month = group.Key.Month,

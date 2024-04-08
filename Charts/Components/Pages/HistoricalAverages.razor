@@ -1,0 +1,35 @@
+﻿@using Server.Models
+<ul>
+    <li>
+        <span class="label">Mean Daily Maximum: </span>
+        <span class="value">@Data.MaxTemp.ToString("F1") °C</span>
+    </li>
+    <li>
+        <span class="label">Daily Mean: </span>
+        <span class="value">@Data.MeanTemp.ToString("F1") °C</span>
+    </li>
+    <li>
+        <span class="label">Mean Daily Minimum: </span>
+        <span class="value">@Data.MinTemp.ToString("F1") °C</span>
+    </li>
+    <li>
+        <span class="label">Precipitation: </span>
+        <span class="value">@Data.Precipitation.ToString("F1") mm</span>
+    </li>
+    <li>
+        <span class="label">Sunshine Hours: </span>
+        <span class="value">@Data.SunshineHours.ToString("F1") hours</span>
+    </li>
+    <li>
+        <span class="label">Record High: </span>
+        <span class="value">@Data.RecordHigh.ToString("F1")°C (@Data.RecordHighYear)</span>
+    </li>
+    <li>
+        <span class="label">Record Low: </span>
+        <span class="value">@Data.RecordLow.ToString("F1")°C (@Data.RecordLowYear)</span>
+    </li>
+</ul>
+
+@code {
+    [Parameter] public WeatherDataModel Data { get; set; }
+}
