@@ -347,6 +347,9 @@
         }
 
         if (recordHighData == null || recordLowData == null) return;
+
+        HistoricalAverages.RecordLow = recordLowData.MinTemp;
+        HistoricalAverages.RecordLowYear = recordLowData.Year;
     }
 
 
