@@ -172,9 +172,9 @@ li {
     .linechart {
         width: 100%; /* Make the chart take full available width */
     }
-    
+
     /* Styles for smaller screens */
-    @@media screen and (max-width: 768px) {
+    @media screen and (max-width: 768px) {
         .container {
             flex-direction: column;
             align-items: center;
@@ -191,10 +191,11 @@ li {
             width: 100%; /* Ensure the line chart fills the width of its container */
         }
     }
-    
+
     /* Media query for narrower widths */
-    @@media screen and (max-width: 768px) {
+    @media screen and (max-width: 768px) {
         .input-section input[type="text"] {
             width: calc(20% - 5px); /* Adjust the width for narrower screens */
         }
     }
+}
