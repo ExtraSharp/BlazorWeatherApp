@@ -67,9 +67,8 @@
 
 <div class="container">
     <div class="input-section">
-        
         <div class="control-wrapper">
-            <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData" @bind-Value="testor">
+            <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
                 <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange" />
                 <ComboBoxFieldSettings Value="ID" Text="Text"></ComboBoxFieldSettings>
             </SfComboBox>
@@ -94,71 +93,7 @@
     <div class="weather-container">
         <h3>Current Weather</h3>
         <h4>Station: @StationName</h4>
-        @if (CurrentWeather == null)
-        {
-            <p>Loading....</p>
-        }
-        else
-        {
-            <div class="current-temp">
-                @switch (Icon)
-                {
-                    case "sunny":
-                        @:<img src="/images/sunny.png" alt="Sunny" id="weatherImage">
-                        break;
-
-                    case "cloudy":
-                        @:<img src="/images/cloudy.png" alt="Cloudy" id="weatherImage">
-                        break;
-
-                    case "partly-cloudy":
-                        @:<img src="/images/partly-cloudy.png" alt="Partly Cloudy" id="weatherImage">
-                        break;
-
-                    case "rainy":
-                        @:<img src="/images/rainy.png" alt="Rainy" id="weatherImage">
-                        break;
-
-                    case "thunderstorm":
-                        @:<img src="/images/thunderstorm.png" alt="Thunderstorm" id="weatherImage">
-                        break;
-
-                    case "clear-night":
-                        @:<img src="/images/clear-night.png" alt="Clear Night" id="weatherImage">
-                        break;
-
-                    case "cloudy-night":
-                        @:<img src="/images/cloudy-night.png" alt="Cloudy Night" id="weatherImage">
-                        break;
-
-                }
-                <span class="value" id="temperature">@Temperature °C</span>
-            </div>
-
-            <div class="data-group">
-                @* <div class="data-item">
-                    <i class="fas fa-thermometer-half"></i>
-                    <span class="label">Temperature:</span>
-                    <span class="value" id="temperature">@Temperature °C</span>
-                </div> *@
-                <div class="data-item">
-                    <i class="fas fa-tint"></i>
-                    <span class="label">Dew Point:</span>
-                    <span class="value" id="dewpoint">@(DewPoint) °C</span>
-                </div>
-                <div class="data-item">
-                    <i class="fas fa-water"></i>
-                    <span class="label">Humidity:</span>
-                    <span class="value" id="humidity">@_humidity %</span>
-                </div>
-                <div class="data-item">
-                    <i class="fas fa-cloud"></i>
-                    <span class="label">Cloud Cover:</span>
-                    <span class="value" id="cloudCover">@CloudCover %</span>
-                </div>
-                <span class="last-update">(Last updated: @LastUpdatedTime)</span>
-            </div>
-        }
+        <CurrentWeather CurrentWeatherData="CurrentWeather" Temperature="@Temperature" DewPoint="@DewPoint" Humidity="@Humidity" CloudCover="@CloudCover" Icon="@Icon" LastUpdatedTime="@LastUpdatedTime" />
     </div>
 
     <div class="historical-averages">
@@ -187,8 +122,6 @@
         public float Latitude { get; set; }
         public float Longitude { get; set; }
     }
-    
-    
     private DateTime LastUpdated { get; set; }
     private string LastUpdatedTime
     {
@@ -198,9 +131,9 @@
             return cstTime.ToString("HH:mm");
         }
     }
+
     private WeatherService? _weatherService;
     private string Width { get; set; } = "730";
-    public string testor { get; set; } 
     private List<ChartDataModel> Temperatures = [];
     private int ViewportWidth { get; set; }
     private int ViewportHeight { get; set; }
@@ -221,7 +154,7 @@
         get => _temperature;
         set => _temperature = value.HasValue ? Math.Round(value.Value, 1) : null;
     }
-    private double? _humidity;
+    private double? Humidity;
 
     bool _displayIcon = false; 
 
@@ -299,7 +232,7 @@
             .Where(weatherStation => weatherStation.ObservationType == "synop")
             .Select(weatherStation =>
             {
-                string stationName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(weatherStation.StationName.ToLower().Trim());
+                var stationName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(weatherStation.StationName.ToLower().Trim());
 
                 // Handle double names with hyphen
                 if (stationName.Contains("-"))
@@ -344,7 +277,6 @@
             await GetHistoricDataForToday();
             await GetChartData();
             IsDataAvailable = true;
-            // testor = CurrentWeather.sources[0].StationName;
         }
         else
         {
@@ -451,7 +383,7 @@
     {
         if (CurrentWeather?.sources != null) StationName = CurrentWeather?.sources[0].StationName;
         Temperature = CurrentWeather?.weather?.Temperature;
-        _humidity = CurrentWeather?.weather?.Humidity;
+        Humidity = CurrentWeather?.weather?.Humidity;
         DewPoint = CurrentWeather?.weather?.DewPoint;
         CloudCover = CurrentWeather?.weather?.CloudCover;
         LastUpdated = CurrentWeather.weather.TimeStamp;

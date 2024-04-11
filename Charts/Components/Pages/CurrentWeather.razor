@@ -1,0 +1,71 @@
+﻿@using Server.Models
+@if (CurrentWeatherData == null)
+{
+    <p>Loading....</p>
+}
+else
+{
+    <div class="current-temp">
+        @switch (Icon)
+        {
+            case "sunny":
+                @:<img src="/images/sunny.png" alt="Sunny" id="weatherImage">
+                break;
+
+            case "cloudy":
+                @:<img src="/images/cloudy.png" alt="Cloudy" id="weatherImage">
+                break;
+
+            case "partly-cloudy":
+                @:<img src="/images/partly-cloudy.png" alt="Partly Cloudy" id="weatherImage">
+                break;
+
+            case "rainy":
+                @:<img src="/images/rainy.png" alt="Rainy" id="weatherImage">
+                break;
+
+            case "thunderstorm":
+                @:<img src="/images/thunderstorm.png" alt="Thunderstorm" id="weatherImage">
+                break;
+
+            case "clear-night":
+                @:<img src="/images/clear-night.png" alt="Clear Night" id="weatherImage">
+                break;
+
+            case "cloudy-night":
+                @:<img src="/images/cloudy-night.png" alt="Cloudy Night" id="weatherImage">
+                break;
+
+        }
+        <span class="value" id="temperature">@Temperature °C</span>
+    </div>
+
+    <div class="data-group">
+        <div class="data-item">
+            <i class="fas fa-tint"></i>
+            <span class="label">Dew Point:</span>
+            <span class="value" id="dewpoint">@(DewPoint) °C</span>
+        </div>
+        <div class="data-item">
+            <i class="fas fa-water"></i>
+            <span class="label">Humidity:</span>
+            <span class="value" id="humidity">@Humidity %</span>
+        </div>
+        <div class="data-item">
+            <i class="fas fa-cloud"></i>
+            <span class="label">Cloud Cover:</span>
+            <span class="value" id="cloudCover">@CloudCover %</span>
+        </div>
+        <span class="last-update">(Last updated: @LastUpdatedTime)</span>
+    </div>
+}
+
+@code {
+    [Parameter] public WeatherResponseModel? CurrentWeatherData { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public double? Temperature { get; set; }
+    [Parameter] public double? DewPoint { get; set; }
+    [Parameter] public double? Humidity { get; set; }
+    [Parameter] public double? CloudCover { get; set; }
+    [Parameter] public string? LastUpdatedTime { get; set; }
+}
