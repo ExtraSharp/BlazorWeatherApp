@@ -59,4 +59,11 @@ public class Source
 
     [JsonPropertyName("observation_type")]
     public string? ObservationType { get; set; }
+
+    [JsonPropertyName("lat")]
+    public float Latitude { get; set; }
+
+    [JsonPropertyName("lon")]
+    public float Longitude { get; set; }
 }
+

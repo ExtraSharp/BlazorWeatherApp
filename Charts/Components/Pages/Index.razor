@@ -3,6 +3,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime Js
 @rendermode InteractiveServer
+@using Syncfusion.Blazor.DropDowns
+@using System.Globalization
 
 @* Todo
 - another data point instead of temp
@@ -33,8 +35,45 @@
     }
 </script>
 
+<style>
+    .control-section {
+        min-height: 370px;
+    }
+
+    .control-wrapper {
+        max-width: 250px;
+        margin: 0 auto;
+        padding: 0px 0px 20px 0;
+    }
+
+    .example-label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    .property-panel-section .property-value {
+        padding: 5px 0px 10px;
+        font-size: 14px;
+    }
+
+    .property-panel-content {
+        padding: 0px 0px 15px 0px;
+    }
+
+        .property-panel-content:last-child {
+            padding: 0px 0px 40px 0px;
+        }
+</style>
+
 <div class="container">
     <div class="input-section">
+        
+        <div class="control-wrapper">
+            <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData" @bind-Value="testor">
+                <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange" />
+                <ComboBoxFieldSettings Value="ID" Text="Text"></ComboBoxFieldSettings>
+            </SfComboBox>
+        </div>
         Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
         Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
         @if (_displayIcon)
@@ -47,7 +86,7 @@
         }
         @if (IsDataAvailable == false)
         {
-            <br />
+            <br/>
             <span style="color: red">Please choose coordinates inside Germany.</span>
         }
     </div>
@@ -141,6 +180,15 @@
 @code {
 
     #region Private Members
+    public class WeatherStations
+    {
+        public string ID { get; set; }
+        public string Text { get; set; }
+        public float Latitude { get; set; }
+        public float Longitude { get; set; }
+    }
+    
+    
     private DateTime LastUpdated { get; set; }
     private string LastUpdatedTime
     {
@@ -152,6 +200,7 @@
     }
     private WeatherService? _weatherService;
     private string Width { get; set; } = "730";
+    public string testor { get; set; } 
     private List<ChartDataModel> Temperatures = [];
     private int ViewportWidth { get; set; }
     private int ViewportHeight { get; set; }
@@ -161,6 +210,7 @@
     private WeatherDataModel HistoricalAverages { get; set; } = new();
     private double? CloudCover { get; set; }
     private string Latitude { get; set; }
+    List<WeatherStations> StationData = new List<WeatherStations>();
     private string Longitude { get; set; }
     private string? Icon { get; set; }
     private static bool _bigWindowSize = true;
@@ -187,7 +237,8 @@
     protected override async Task OnInitializedAsync()
     {
         SetInitialCoordinates();
-       
+
+        await LoadStationList();
         await RefreshData();
     }
 
@@ -238,30 +289,76 @@
         StateHasChanged();
     }
 
+    private async Task LoadStationList()
+    {
+        StationData.Clear();
+        var apiResponse = await ApiService.GetAllWeatherStations();
+
+        StationData.AddRange(apiResponse.sources
+            .Where(weatherStation => weatherStation.StationId != null) // Filter out null StationId
+            .Where(weatherStation => weatherStation.ObservationType == "synop")
+            .Select(weatherStation =>
+            {
+                string stationName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(weatherStation.StationName.ToLower().Trim());
+
+                // Handle double names with hyphen
+                if (stationName.Contains("-"))
+                {
+                    string[] parts = stationName.Split('-');
+                    stationName = string.Join("-", parts.Select(part => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(part.Trim())));
+                }
+
+                return new WeatherStations
+                    {
+                        ID = weatherStation.StationId,
+                        Text = stationName,
+                        Latitude = weatherStation.Latitude,
+                        Longitude = weatherStation.Longitude
+                    };
+            })
+            .GroupBy(weatherStation => new { weatherStation.ID, weatherStation.Text })
+            .Select(group => group.First()));
+
+        StationData = StationData
+            .OrderBy(station => station.Text)
+            .ToList();
+    }
+
     private async Task RefreshData()
     {
         CurrentWeather = null;
-
+        
         if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude) || !IsValidCoordinates())
         {
             // Handle validation errors
             return;
         }
 
-        _weatherService = new WeatherService(Latitude, Longitude); 
+        _weatherService = new WeatherService(Latitude, Longitude);
 
         CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
 
-        if (CurrentWeather?.weather != null) 
+        if (CurrentWeather?.weather != null)
         {
             AssignValues();
             await GetHistoricDataForToday();
             await GetChartData();
             IsDataAvailable = true;
+            // testor = CurrentWeather.sources[0].StationName;
         }
         else
         {
             IsDataAvailable = false;
+        }
+    }
+
+    public void OnChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, WeatherStations> args)
+    {
+        if (args.ItemData != null)
+        {
+            Latitude = Math.Round(args.ItemData.Latitude, 2).ToString();
+            Longitude = Math.Round(args.ItemData.Longitude, 2).ToString();
+            
         }
     }
 
