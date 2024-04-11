@@ -35,7 +35,7 @@ public class ApiService
 
     public async Task<MultipleWeatherResponseModel?> GetAllWeatherStations()
     {
-        var response = await _client.GetJsonAsync<MultipleWeatherResponseModel>($"sources?lat=51.7&lon=13.4&max_dist=500000");
+        var response = await _client.GetJsonAsync<MultipleWeatherResponseModel>($"sources?lat=51.7&lon=10&max_dist=500000");
 
         return response;
     }
