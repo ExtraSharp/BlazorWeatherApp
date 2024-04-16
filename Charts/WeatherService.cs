@@ -1,6 +1,4 @@
-﻿using Server.Models;
-
-namespace Server;
+﻿namespace Server;
 
 public class WeatherService(string latitude, string longitude)
 {

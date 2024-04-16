@@ -1,5 +1,4 @@
 ﻿using RestSharp;
-using Server.Models;
 
 namespace Server;
 public class ApiService
