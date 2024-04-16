@@ -2,12 +2,12 @@
 @using Server.Models
 @inject ApiService ApiService
 @inject IJSRuntime Js
-@rendermode InteractiveServer
+@* @rendermode InteractiveServer *@
+@rendermode @(new InteractiveServerRenderMode(false))
 @using Syncfusion.Blazor.DropDowns
 @using System.Globalization
 
 @* Todo
-- another data point instead of temp
 - link to long/lat picker
 *@
 
@@ -179,6 +179,7 @@
     {
         if (firstRender)
         {
+            StateHasChanged();
             await Js.InvokeVoidAsync("window.registerViewportChangeCallback", DotNetObjectReference.Create(this));
             // var dimension = await Js.InvokeAsync<WindowDimension>("getWindowDimensions");
         }
