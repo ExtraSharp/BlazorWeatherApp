@@ -54,7 +54,7 @@ h4 {
 /* Hover effect for h3 */
 .container {
     display: flex;
-    justify-content: center;
+    justify-content: end;
     align-items: stretch;
     flex-wrap: wrap;
     gap: 20px;
@@ -63,9 +63,7 @@ h4 {
 }
 
 .item {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
+    flex: 0 0 48%;
     align-items: center;
     background-color: #fff;
     padding: 20px;
@@ -74,49 +72,15 @@ h4 {
     transition: background-color 0.3s; /* Smooth transition effect for background color */
 }
 
-.item2 {
-    width: 100%;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    align-items: center;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s; /* Smooth transition effect for background color */
-}
-
-.weather-container,
-.historical-averages,
-.linechart {
-    flex: 1;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.linechart {
+.item:nth-child(3),
+.item:nth-child(4) {
+    flex-basis: 100%; /* Takes the full width */
     align-self: center;
 }
 
-.weather-container,
-.historical-averages {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s; /* Smooth transition effect for background color */
+.item:hover {
+    background: linear-gradient(to bottom, #f0f8ff, #ffffff); /* Change gradient on hover */
 }
-
-    .weather-container:hover,
-    .historical-averages:hover,
-    .linechart:hover
-    .item:hover
-    .item2:hover {
-        background: linear-gradient(to bottom, #f0f8ff, #ffffff); /* Change gradient on hover */
-    }
 
 .current-temp {
     font-size: 2em;
@@ -230,29 +194,8 @@ li {
         }
 
 @media (max-width: 768px) {
-    .item2 {
-        width: 100%; /* Make the chart take full available width */
-    }
-
-    /* Styles for smaller screens */
-    @media screen and (max-width: 768px) {
-        .container {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .weather-container,
-        .historical-averages,
-        .linechart,
-        .item
-        .item2{
-            width: 100%; /* Set all containers to occupy full width */
-            margin-bottom: 20px; /* Add some space between containers */
-        }
-
-        .item2 {
-            width: 100%; /* Ensure the line chart fills the width of its container */
-        }
+    .item {
+        flex-basis: 100%; /* Make the chart take full available width */
     }
 
     /* Media query for narrower widths */

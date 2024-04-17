@@ -35,7 +35,7 @@
 </script>
 
 <div class="container">
-    <div class="input-section">
+    @* <div class="input-section">
         <div class="control-wrapper">
             <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
                 <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange"/>
@@ -57,34 +57,32 @@
             <br/>
             <span style="color: red">Please choose coordinates inside Germany.</span>
         }
-    </div>
+    </div> *@
 
-    <div class="weather-container">
+    <div class="item">
         <h3>Current Weather</h3>
         <h4>Station: @StationName</h4>
         <CurrentWeather CurrentWeatherData="CurrentWeather" Temperature="@Temperature" DewPoint="@DewPoint" Humidity="@Humidity" CloudCover="@CloudCover" Icon="@Icon" LastUpdatedTime="@LastUpdatedTime" />
     </div>
 
-    <div class="historical-averages">
+    <div class="item">
         <h3>Historical Data for @DateTime.Now.ToString("dd MMM")</h3>
         <HistoricalAverages Data="@HistoricalAverages"></HistoricalAverages>
     </div>
     
-    @if (_climateChartVisible == false)
-    {
-        <div class="item2">
-            <button @onclick="GenerateClimateChart" type="button" class="btn btn-primary">Generate Climate Chart</button>
-        </div>
-    }
-    else
-    {
-        if (HeatMapData == null)
+    <div class="item">
+        @if (_climateChartVisible == false)
         {
-            <div class="item2">Loading...</div>
+            <button @onclick="GenerateClimateChart" type="button" class="btn btn-primary">Generate Climate Chart</button>
         }
         else
         {
-            <div class="item2">
+            if (HeatMapData == null)
+            {
+                <span>Loading...</span>
+            }
+            else
+            {
                 <h3>Climate Chart for @StationName</h3>
                 <SfHeatMap DataSource="@HeatMapData" Height="350" Width="@Width">
                     <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect"></HeatMapCellSettings>
@@ -111,11 +109,11 @@
                     <HeatMapLegendSettings Visible="false">
                     </HeatMapLegendSettings>
                 </SfHeatMap>
-            </div>
+            }
         }
-    }
+    </div>
     
-    <div class="linechart">
+    <div class="item">
         <h3>Mean Temperatures and Precipitation for @DateTime.Now.ToString("MMMM")</h3>
         <WeatherChart Temperatures="@Temperatures" Width="@Width" @rendermode="@RenderMode.InteractiveServer" />
     </div>
