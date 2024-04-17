@@ -59,13 +59,13 @@
         }
     </div>
 
-    <div class="item">
+    <div class="weather-container">
         <h3>Current Weather</h3>
         <h4>Station: @StationName</h4>
         <CurrentWeather CurrentWeatherData="CurrentWeather" Temperature="@Temperature" DewPoint="@DewPoint" Humidity="@Humidity" CloudCover="@CloudCover" Icon="@Icon" LastUpdatedTime="@LastUpdatedTime" />
     </div>
 
-    <div class="item">
+    <div class="historical-averages">
         <h3>Historical Data for @DateTime.Now.ToString("dd MMM")</h3>
         <HistoricalAverages Data="@HistoricalAverages"></HistoricalAverages>
     </div>
@@ -86,7 +86,7 @@
         {
             <div class="item2">
                 <h3>Climate Chart for @StationName</h3>
-                <SfHeatMap DataSource="@HeatMapData" Height="350">
+                <SfHeatMap DataSource="@HeatMapData" Height="350" Width="@Width">
                     <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect"></HeatMapCellSettings>
                     <HeatMapXAxis Labels="@XLabels">
                         <HeatMapXAxisTextStyle FontFamily="inherit"></HeatMapXAxisTextStyle>
@@ -115,7 +115,7 @@
         }
     }
     
-    <div class="item2">
+    <div class="linechart">
         <h3>Mean Temperatures and Precipitation for @DateTime.Now.ToString("MMMM")</h3>
         <WeatherChart Temperatures="@Temperatures" Width="@Width" @rendermode="@RenderMode.InteractiveServer" />
     </div>
