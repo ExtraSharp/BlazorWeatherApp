@@ -167,8 +167,12 @@ li {
     }
 /* Additional styles for latitude and longitude input section */
 .input-section {
-    width: 100%;
-    margin-bottom: 20px;
+    justify-content: end;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-width: 600px;
+    margin: 40px auto;
 }
 
     .input-section input[type="text"] {

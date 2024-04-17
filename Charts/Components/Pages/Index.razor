@@ -34,8 +34,8 @@
     }
 </script>
 
-<div class="container">
-    @* <div class="input-section">
+
+    <div class="input-section">
         <div class="control-wrapper">
             <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
                 <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange"/>
@@ -57,8 +57,8 @@
             <br/>
             <span style="color: red">Please choose coordinates inside Germany.</span>
         }
-    </div> *@
-
+    </div>
+<div class="container">
     <div class="item">
         <h3>Current Weather</h3>
         <h4>Station: @StationName</h4>
@@ -73,13 +73,13 @@
     <div class="item">
         @if (_climateChartVisible == false)
         {
-            <button @onclick="GenerateClimateChart" type="button" class="btn btn-primary">Generate Climate Chart</button>
+            <button @onclick="GenerateClimateChart" type="button" class="btn btn-primary">Load Climate Chart</button>
         }
         else
         {
             if (HeatMapData == null)
             {
-                <span>Loading...</span>
+                <span>Loading climate data...</span>
             }
             else
             {

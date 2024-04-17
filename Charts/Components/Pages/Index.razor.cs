@@ -64,35 +64,12 @@ public partial class Index
     #endregion
 
     #region Methods
-
-
-    double[,] GetDefaultData()
-    {
-        double[,] dataSource = new double[,]
-        {
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-            {-13.4, -5.7, 0.9, 3.9, 7.2, 16, 19.5},
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-            {3.5, 4.9, 10, 15.3, 20.2, 29, 29.8},
-            {7.5, 8.3, 15.5, 21.1, 26.4, 35.3, 38.7},
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
-        };
-        return dataSource;
-    }
     protected override async Task OnInitializedAsync()
     {
         SetInitialCoordinates();
 
         await LoadStationList();
         await RefreshData();
-
-        
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
