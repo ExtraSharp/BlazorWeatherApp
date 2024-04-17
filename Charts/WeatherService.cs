@@ -1,4 +1,6 @@
-﻿namespace Server;
+﻿using Syncfusion.Blazor.Charts.Chart.Internal;
+
+namespace Server;
 
 public class WeatherService(string latitude, string longitude)
 {
@@ -10,6 +12,103 @@ public class WeatherService(string latitude, string longitude)
         var dayModels = CreateDayModels(entireMonth);
 
         return GroupDayModels(dayModels);
+    }
+
+    public async Task<List<WeatherDataModel>> GetClimateChartData()
+    {
+        int year = 2023;
+        
+        List<WeatherDataModel> output = new();
+
+        for (int j = 1; j <= 12; j++)
+        {
+            year = 2023;
+
+            List<WeatherDataModel> monthlyAverages = new();
+            List<WeatherDataModel> chartData = new();
+
+            for (int i = 0; i < 5; i++)
+            {
+                List<WeatherModel> yearData = await FetchEntireYear(year - i, j);
+
+                monthlyAverages = CalculateMonthlyAverages(yearData);
+
+                WeatherDataModel monthData = CalculateMonthlySummary(monthlyAverages);
+
+                chartData.Add(monthData);
+            }
+
+            WeatherDataModel finalData = CalculateFinalSummary(chartData);
+            output.Add(finalData);
+        }
+        
+        
+
+        return output;
+    }
+
+    private List<WeatherDataModel> CalculateMonthlyAverages(List<WeatherModel> yearData)
+    {
+        return yearData
+            .Where(data => data.Temperature != null)
+            .GroupBy(data => new { data.TimeStamp.Year, data.TimeStamp.Month, data.TimeStamp.Day })
+            .Select(group => new WeatherDataModel
+            {
+                Year = group.Key.Year,
+                Month = group.Key.Month,
+                MaxTemp = (double)group.Max(data => data.Temperature),
+                MinTemp = (double)group.Min(data => data.Temperature),
+                MeanTemp = (double)group.Average(data => data.Temperature),
+                //AverageHigh = group.Average(data => data.Temperature),
+                // Calculate other statistics as needed
+            })
+            .ToList();
+    }
+
+
+    private WeatherDataModel CalculateMonthlySummary(List<WeatherDataModel> monthlyAverages)
+    {
+        var monthData = new WeatherDataModel
+        {
+            MaxTemp = monthlyAverages.Average(day => day.MaxTemp),
+            MeanTemp = monthlyAverages.Average(day => day.MeanTemp),
+            MinTemp = monthlyAverages.Average(day => day.MinTemp),
+            MonthlyHigh = monthlyAverages.Max(day => day.MaxTemp),
+            MonthlyLow = monthlyAverages.Min(day => day.MinTemp)
+        };
+
+        return monthData;
+    }
+
+    private WeatherDataModel CalculateFinalSummary(List<WeatherDataModel> chartData)
+    {
+        var finalData = new WeatherDataModel
+        {
+            RecordHigh = chartData.Max(day => day.MonthlyHigh),
+            RecordLow = chartData.Min(day => day.MonthlyLow),
+            MonthlyHigh = chartData.Average(day => day.MonthlyHigh),
+            MonthlyLow = chartData.Average(day => day.MonthlyLow),
+            MaxTemp = chartData.Average(day => day.MaxTemp),
+            MeanTemp = chartData.Average(day => day.MeanTemp),
+            MinTemp = chartData.Average(day => day.MinTemp)
+        };
+
+        return finalData;
+    }
+
+    private async Task<List<WeatherModel>> FetchEntireYear(int year, int month)
+    {
+        var tasks = new List<Task<MultipleWeatherResponseModel?>>();
+
+        int days = DateTime.DaysInMonth(year, month);
+
+        tasks.Add(_apiService.GetEntireData($"{year.ToString()}-{month:00}-01", $"{year.ToString()}-{month:00}-{days:00}", latitude, longitude));
+
+        var responses = await Task.WhenAll(tasks);
+        var weatherData = responses.SelectMany(response => response?.weather ?? Enumerable.Empty<WeatherModel>());
+
+        return weatherData.ToList();
+
     }
 
     private async Task<List<WeatherModel>> FetchEntireMonth()
@@ -39,7 +138,6 @@ public class WeatherService(string latitude, string longitude)
                 MaxTemp = (double)group.Max(weather => weather.Temperature),
                 MinTemp = (double)group.Min(weather => weather.Temperature),
                 Precipitation = group.Average(weather => weather.Precipitation ?? double.MinValue)
-                // Include other properties as needed
             })
             .ToList();
     }

@@ -9,6 +9,8 @@ public class WeatherDataModel
     public int Year { get; set; }
     public double MeanTemp { get; set; }
     public double MaxTemp { get; set; }
+    public double MonthlyHigh { get; set; }
+    public double MonthlyLow { get; set; }
     public double MinTemp { get; set; }
     public double Precipitation { get; set; }
     public double SunshineHours { get; set; }

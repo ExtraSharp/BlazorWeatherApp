@@ -10,7 +10,7 @@ public partial class Index
         public float Latitude { get; set; }
         public float Longitude { get; set; }
     }
-
+    public object HeatMapData { get; set; }
     private DateTime LastUpdated { get; set; }
 
     private string LastUpdatedTime
@@ -39,6 +39,7 @@ public partial class Index
     private static bool _bigWindowSize = true;
     private double? _temperature;
 
+
     private double? Temperature
     {
         get => _temperature;
@@ -55,16 +56,43 @@ public partial class Index
         set => _dewPoint = value.HasValue ? Math.Round(value.Value, 1) : null;
     }
 
+    string[] XLabels = new string[] { "Jan", "Feb", "Mar", "Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Year" };
+    string[] YLabels = new string[] { "Record Low", "Mean Minimum", "Mean Daily Minimum", "Daily Mean", "Mean Daily Maximum", "Mean Maximum", "Record High" };
+
+    private bool _climateChartVisible = false;
+
     #endregion
 
     #region Methods
 
+
+    double[,] GetDefaultData()
+    {
+        double[,] dataSource = new double[,]
+        {
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+            {-13.4, -5.7, 0.9, 3.9, 7.2, 16, 19.5},
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+            {3.5, 4.9, 10, 15.3, 20.2, 29, 29.8},
+            {7.5, 8.3, 15.5, 21.1, 26.4, 35.3, 38.7},
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+            {-11.1, -6, 1.6, 3.6, 5.3, 14.3, 18.3},
+        };
+        return dataSource;
+    }
     protected override async Task OnInitializedAsync()
     {
         SetInitialCoordinates();
 
         await LoadStationList();
         await RefreshData();
+
+        
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -152,10 +180,12 @@ public partial class Index
             .OrderBy(station => station.Text)
             .ToList();
     }
-
+    
     private async Task RefreshData()
     {
         CurrentWeather = null;
+        HeatMapData = null;
+        _climateChartVisible = false;
 
         if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude) || !IsValidCoordinates())
         {
@@ -180,6 +210,50 @@ public partial class Index
         }
     }
 
+    private async Task GetClimateChartData()
+    {
+        _climateChartVisible = true;
+
+        if (_weatherService != null)
+        {
+            var weatherData = await _weatherService.GetClimateChartData();
+
+            double[,] matrix = new double[13, 7];
+
+            // Populate the matrix with data from weatherData
+            for (int i = 0; i < 12; i++)
+            {
+                matrix[i, 0] = Math.Round(weatherData[i].RecordLow, 1);
+                matrix[i, 1] = Math.Round(weatherData[i].MonthlyLow, 1);
+                matrix[i, 2] = Math.Round(weatherData[i].MinTemp, 1);
+                matrix[i, 3] = Math.Round(weatherData[i].MeanTemp, 1);
+                matrix[i, 4] = Math.Round(weatherData[i].MaxTemp, 1);
+                matrix[i, 5] = Math.Round(weatherData[i].MonthlyHigh, 1);
+                matrix[i, 6] = Math.Round(weatherData[i].RecordHigh, 1);
+            }
+
+            // Calculate aggregated data
+            double minRecordLow = weatherData.Min(data => data.RecordLow);
+            double avgMonthlyLow = weatherData.Average(data => data.MonthlyLow);
+            double avgMinTemp = weatherData.Average(data => data.MinTemp);
+            double avgMeanTemp = weatherData.Average(data => data.MeanTemp);
+            double avgMaxTemp = weatherData.Average(data => data.MaxTemp);
+            double avgMonthlyHigh = weatherData.Average(data => data.MonthlyHigh);
+            double maxRecordHigh = weatherData.Max(data => data.RecordHigh);
+
+            // Add aggregated data as a new row to the matrix
+            matrix[12, 0] = Math.Round(minRecordLow, 1);
+            matrix[12, 1] = Math.Round(avgMonthlyLow, 1);
+            matrix[12, 2] = Math.Round(avgMinTemp, 1);
+            matrix[12, 3] = Math.Round(avgMeanTemp, 1);
+            matrix[12, 4] = Math.Round(avgMaxTemp, 1);
+            matrix[12, 5] = Math.Round(avgMonthlyHigh, 1);
+            matrix[12, 6] = Math.Round(maxRecordHigh, 1);
+
+            HeatMapData = matrix;
+        }
+    }
+
     public void OnChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, WeatherStations> args)
     {
         if (args.ItemData != null)
@@ -195,6 +269,11 @@ public partial class Index
         var longitude = double.Parse(Longitude);
 
         return latitude is <= 90 and >= -90 && longitude is <= 180 and >= -180;
+    }
+
+    private async Task GenerateClimateChart()
+    {
+        await GetClimateChartData();
     }
 
     private void SetInitialCoordinates()

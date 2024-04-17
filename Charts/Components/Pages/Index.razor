@@ -3,6 +3,8 @@
 @inject IJSRuntime Js
 @rendermode InteractiveServer
 @using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.HeatMap
+@using Syncfusion.Blazor.Navigations
 
 @* Todo
 - link to long/lat picker
@@ -32,19 +34,11 @@
     }
 </script>
 
-<style>
-    .control-wrapper {
-        max-width: 250px;
-        margin: 0 auto;
-        padding: 0px 0px 20px 0;
-    }
-</style>
-
 <div class="container">
     <div class="input-section">
         <div class="control-wrapper">
             <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
-                <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange" />
+                <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange"/>
                 <ComboBoxFieldSettings Value="ID" Text="Text"></ComboBoxFieldSettings>
             </SfComboBox>
         </div>
@@ -76,17 +70,61 @@
         <HistoricalAverages Data="@HistoricalAverages"></HistoricalAverages>
     </div>
     
+    @if (_climateChartVisible == false)
+    {
+        <div class="item">
+            <button @onclick="GenerateClimateChart" type="button" class="btn btn-primary">Generate Climate Chart</button>
+        </div>
+    }
+    else
+    {
+        if (HeatMapData == null)
+        {
+            <div class="item">Loading...</div>
+        }
+        else
+        {
+            <div class="item">
+                <h3>Climate Chart for @StationName</h3>
+                <SfHeatMap DataSource="@HeatMapData" Height="350">
+                    <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect"></HeatMapCellSettings>
+                    <HeatMapXAxis Labels="@XLabels">
+                        <HeatMapXAxisTextStyle FontFamily="inherit"></HeatMapXAxisTextStyle>
+                    </HeatMapXAxis>
+                    <HeatMapYAxis Labels="@YLabels">
+                        <HeatMapYAxisTextStyle FontFamily="inherit"></HeatMapYAxisTextStyle>
+                    </HeatMapYAxis>
+                    <HeatMapPaletteSettings Type="PaletteType.Gradient">
+                        <HeatMapPalettes>
+                            <HeatMapPalette StartValue="-21" EndValue="-10" MinColor="#7575ff" MaxColor="#b0b0ff"></HeatMapPalette>
+                            <HeatMapPalette StartValue="-10" EndValue="0" MinColor="#b2b2ff" MaxColor="#ffffff"></HeatMapPalette>
+                            <HeatMapPalette StartValue="0" EndValue="5" MinColor="#e6e6ff" MaxColor="#fffdfc"></HeatMapPalette>
+                            <HeatMapPalette StartValue="5" EndValue="10" MinColor="#fffbf8" MaxColor="#ffdbb7"></HeatMapPalette>
+                            <HeatMapPalette StartValue="10" EndValue="15" MinColor="#ffdab5" MaxColor="#ffb871"></HeatMapPalette>
+                            <HeatMapPalette StartValue="15" EndValue="20" MinColor="#ffb56b" MaxColor="#ff9429"></HeatMapPalette>
+                            <HeatMapPalette StartValue="20" EndValue="25" MinColor="#ff9327" MaxColor="#FF7300"></HeatMapPalette>
+                            <HeatMapPalette StartValue="25" EndValue="30" MinColor="#ff7100" MaxColor="#ff5100"></HeatMapPalette>
+                            <HeatMapPalette StartValue="30" EndValue="35" MinColor="#ff4d00" MaxColor="#ff2e00"></HeatMapPalette>
+                            <HeatMapPalette StartValue="35" EndValue="43" MinColor="#ff2c00" MaxColor="#ea0000"></HeatMapPalette>
+                        </HeatMapPalettes>
+                    </HeatMapPaletteSettings>
+                    <HeatMapLegendSettings Visible="false">
+                    </HeatMapLegendSettings>
+                </SfHeatMap>
+            </div>
+        }
+    }
+    
     <div class="linechart">
         <h3>Mean Temperatures and Precipitation for @DateTime.Now.ToString("MMMM")</h3>
         <WeatherChart Temperatures="@Temperatures" Width="@Width" @rendermode="@RenderMode.InteractiveServer" />
     </div>
-
+    
     <div class="get-source-code">
         <a href="https://github.com/extrasharp/BlazorWeatherApp" type="button" class="btn btn-primary">Source Code</a>
     </div>
 </div>
 
-
 @code {
-
+    
 }

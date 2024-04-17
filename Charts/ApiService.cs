@@ -32,6 +32,13 @@ public class ApiService
         return response;
     }
 
+    public async Task<MultipleWeatherResponseModel?> GetEntireData(string date, string lastDate, string latitude, string longitude)
+    {
+        var response = await _client.GetJsonAsync<MultipleWeatherResponseModel>($"weather?lat={latitude}&lon={longitude}&date={date}&last_date={lastDate}");
+
+        return response;
+    }
+
     public async Task<MultipleWeatherResponseModel?> GetAllWeatherStations()
     {
         var response = await _client.GetJsonAsync<MultipleWeatherResponseModel>($"sources?lat=51.7&lon=10&max_dist=500000");
