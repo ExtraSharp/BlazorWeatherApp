@@ -63,11 +63,13 @@ h4 {
 }
 
 .item {
-    width: 45%;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
     background-color: #fff;
     padding: 20px;
     border-radius: 8px;
-    align-items: center;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s; /* Smooth transition effect for background color */
 }
@@ -111,6 +113,7 @@ h4 {
     .weather-container:hover,
     .historical-averages:hover,
     .linechart:hover
+    .item:hover
     .item2:hover {
         background: linear-gradient(to bottom, #f0f8ff, #ffffff); /* Change gradient on hover */
     }
@@ -227,7 +230,7 @@ li {
         }
 
 @media (max-width: 768px) {
-    .linechart {
+    .item2 {
         width: 100%; /* Make the chart take full available width */
     }
 
@@ -240,12 +243,14 @@ li {
 
         .weather-container,
         .historical-averages,
-        .linechart {
+        .linechart,
+        .item
+        .item2{
             width: 100%; /* Set all containers to occupy full width */
             margin-bottom: 20px; /* Add some space between containers */
         }
 
-        .linechart {
+        .item2 {
             width: 100%; /* Ensure the line chart fills the width of its container */
         }
     }
