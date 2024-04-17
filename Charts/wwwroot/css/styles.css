@@ -63,7 +63,7 @@ h4 {
 }
 
 .item {
-    flex: 1 1 45%; /* Each item takes up 45% of the container width, allowing for some space between them */
+    width: 45%;
     background-color: #fff;
     padding: 20px;
     border-radius: 8px;
@@ -72,9 +72,14 @@ h4 {
     transition: background-color 0.3s; /* Smooth transition effect for background color */
 }
 
-.item:nth-child(3),
-.item:nth-child(4) {
-    flex-basis: 100%; /* Force items 3 and 4 to take up 100% width */
+.item2 {
+    width: 100%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s; /* Smooth transition effect for background color */
 }
 
 .weather-container,
@@ -105,7 +110,8 @@ h4 {
 
     .weather-container:hover,
     .historical-averages:hover,
-    .linechart:hover {
+    .linechart:hover
+    .item2:hover {
         background: linear-gradient(to bottom, #f0f8ff, #ffffff); /* Change gradient on hover */
     }
 

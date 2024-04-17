@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Components\Pages\Heatmap.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="SegMDL2.ttf" />
   </ItemGroup>
 <ItemGroup>
@@ -42,6 +46,15 @@
   <Content Update="wwwroot\images\thunderstorm.png">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
+</ItemGroup>
+<ItemGroup>
+  <UpToDateCheckInput Remove="Components\Pages\Heatmap.razor" />
+</ItemGroup>
+<ItemGroup>
+  <_ContentIncludedByDefault Remove="Components\Pages\Heatmap.razor" />
+</ItemGroup>
+<ItemGroup>
+  <None Include="Components\Pages\HeatMap.razor" />
 </ItemGroup>
 
   

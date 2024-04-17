@@ -72,7 +72,7 @@
     
     @if (_climateChartVisible == false)
     {
-        <div class="item">
+        <div class="item2">
             <button @onclick="GenerateClimateChart" type="button" class="btn btn-primary">Generate Climate Chart</button>
         </div>
     }
@@ -80,11 +80,11 @@
     {
         if (HeatMapData == null)
         {
-            <div class="item">Loading...</div>
+            <div class="item2">Loading...</div>
         }
         else
         {
-            <div class="item">
+            <div class="item2">
                 <h3>Climate Chart for @StationName</h3>
                 <SfHeatMap DataSource="@HeatMapData" Height="350">
                     <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect"></HeatMapCellSettings>
