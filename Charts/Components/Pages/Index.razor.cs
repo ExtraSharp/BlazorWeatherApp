@@ -103,7 +103,7 @@ public partial class Index
                 Width = "300";
                 _displayIcon = false;
                 TextOverflow = TextOverflow.Wrap;
-                DataLabelFontSize = "12px";
+                DataLabelFontSize = "11px";
                 break;
             case < 769:
                 Width = "500";
