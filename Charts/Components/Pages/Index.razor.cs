@@ -60,6 +60,7 @@ public partial class Index
     string[] YLabels = new string[] { "Record Low", "Mean Minimum", "Mean Daily Minimum", "Daily Mean", "Mean Daily Maximum", "Mean Maximum", "Record High" };
 
     private bool _climateChartVisible = false;
+    private TextOverflow _textOverflow = TextOverflow.Wrap;
 
     #endregion
 
@@ -95,22 +96,27 @@ public partial class Index
             case < 410:
                 Width = "270";
                 _displayIcon = true;
+                _textOverflow = TextOverflow.Wrap;
                 break;
             case < 468:
                 Width = "300";
                 _displayIcon = false;
+                _textOverflow = TextOverflow.Wrap;
                 break;
             case < 769:
                 Width = "500";
                 _displayIcon = false;
+                _textOverflow = TextOverflow.Wrap;
                 break;
             case < 1000:
                 Width = "730";
                 _displayIcon = false;
+                _textOverflow = TextOverflow.None;
                 break;
             case >= 1000:
                 Width = "730";
                 _displayIcon = false;
+                _textOverflow = TextOverflow.None;
                 break;
             default:
                 Width = "730";

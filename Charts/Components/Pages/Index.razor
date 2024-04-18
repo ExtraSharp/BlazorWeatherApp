@@ -84,13 +84,15 @@
             else
             {
                 <h3>Climate Chart for @StationName</h3>
-                <SfHeatMap DataSource="@HeatMapData" Height="350">
-                    <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect"></HeatMapCellSettings>
+                <SfHeatMap DataSource="@HeatMapData">
+                    <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect" Format="{value} °C">
+                        <HeatMapCellBorder Width="1" Radius="4" Color="White"></HeatMapCellBorder>
+                    </HeatMapCellSettings>
                     <HeatMapXAxis Labels="@XLabels">
-                        <HeatMapXAxisTextStyle FontFamily="inherit"></HeatMapXAxisTextStyle>
+                        <HeatMapXAxisTextStyle FontFamily="inherit" TextOverflow="TextOverflow.Wrap"></HeatMapXAxisTextStyle>
                     </HeatMapXAxis>
                     <HeatMapYAxis Labels="@YLabels">
-                        <HeatMapYAxisTextStyle FontFamily="inherit"></HeatMapYAxisTextStyle>
+                        <HeatMapYAxisTextStyle FontFamily="inherit" TextOverflow="@_textOverflow"></HeatMapYAxisTextStyle>
                     </HeatMapYAxis>
                     <HeatMapPaletteSettings Type="PaletteType.Gradient">
                         <HeatMapPalettes>
@@ -124,5 +126,5 @@
 </div>
 
 @code {
-    
+     
 }
