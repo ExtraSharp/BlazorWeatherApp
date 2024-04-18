@@ -1,5 +1,40 @@
-﻿@page "/Heatmap"
+﻿@page "/WeatherChart"
+@using Syncfusion.Blazor.HeatMap
+@using Server.Models
+
+<SfHeatMap DataSource="@HeatMapData">
+    <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect">
+        <HeatMapCellBorder Width="1" Radius="4" Color="White"></HeatMapCellBorder>
+        <HeatMapCellTextStyle Size="@FontSize" />
+    </HeatMapCellSettings>
+    <HeatMapXAxis Labels="@_xLabels">
+        <HeatMapXAxisTextStyle FontFamily="inherit" TextOverflow="TextOverflow.Trim"></HeatMapXAxisTextStyle>
+    </HeatMapXAxis>
+    <HeatMapYAxis Labels="@_yLabels">
+        <HeatMapYAxisTextStyle FontFamily="inherit" TextOverflow="@TextOverflow"></HeatMapYAxisTextStyle>
+    </HeatMapYAxis>
+    <HeatMapPaletteSettings Type="PaletteType.Gradient">
+        <HeatMapPalettes>
+            <HeatMapPalette StartValue="-21" EndValue="-10" MinColor="#7575ff" MaxColor="#b0b0ff"></HeatMapPalette>
+            <HeatMapPalette StartValue="-10" EndValue="0" MinColor="#b2b2ff" MaxColor="#ffffff"></HeatMapPalette>
+            <HeatMapPalette StartValue="0" EndValue="5" MinColor="#e6e6ff" MaxColor="#fffdfc"></HeatMapPalette>
+            <HeatMapPalette StartValue="5" EndValue="10" MinColor="#fffbf8" MaxColor="#ffdbb7"></HeatMapPalette>
+            <HeatMapPalette StartValue="10" EndValue="15" MinColor="#ffdab5" MaxColor="#ffb871"></HeatMapPalette>
+            <HeatMapPalette StartValue="15" EndValue="20" MinColor="#ffb56b" MaxColor="#ff9429"></HeatMapPalette>
+            <HeatMapPalette StartValue="20" EndValue="25" MinColor="#ff9327" MaxColor="#FF7300"></HeatMapPalette>
+            <HeatMapPalette StartValue="25" EndValue="30" MinColor="#ff7100" MaxColor="#ff5100"></HeatMapPalette>
+            <HeatMapPalette StartValue="30" EndValue="35" MinColor="#ff4d00" MaxColor="#ff2e00"></HeatMapPalette>
+            <HeatMapPalette StartValue="35" EndValue="43" MinColor="#ff2c00" MaxColor="#ea0000"></HeatMapPalette>
+        </HeatMapPalettes>
+    </HeatMapPaletteSettings>
+    <HeatMapLegendSettings Visible="false">
+    </HeatMapLegendSettings>
+</SfHeatMap>
 
 @code {
-
+    [Parameter] public required object HeatMapData { get; set; } 
+    [Parameter] public TextOverflow TextOverflow { get; set; }
+    [Parameter] public string? FontSize { get; set; }
+    string[] _xLabels = new string[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Year" };
+    string[] _yLabels = new string[] { "Record Low", "Mean Minimum", "Mean Daily Minimum", "Daily Mean", "Mean Daily Maximum", "Mean Maximum", "Record High" };
 }

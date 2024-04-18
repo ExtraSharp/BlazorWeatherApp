@@ -1,4 +1,6 @@
-﻿namespace Server.Components.Pages;
+﻿using System.Security.AccessControl;
+
+namespace Server.Components.Pages;
 
 public partial class Index
 {
@@ -38,6 +40,7 @@ public partial class Index
     private string? Icon { get; set; }
     private static bool _bigWindowSize = true;
     private double? _temperature;
+    private string DataLabelFontSize { get; set; } = "14px";
 
 
     private double? Temperature
@@ -56,11 +59,8 @@ public partial class Index
         set => _dewPoint = value.HasValue ? Math.Round(value.Value, 1) : null;
     }
 
-    string[] XLabels = new string[] { "Jan", "Feb", "Mar", "Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Year" };
-    string[] YLabels = new string[] { "Record Low", "Mean Minimum", "Mean Daily Minimum", "Daily Mean", "Mean Daily Maximum", "Mean Maximum", "Record High" };
-
     private bool _climateChartVisible = false;
-    private TextOverflow _textOverflow = TextOverflow.Wrap;
+    private TextOverflow TextOverflow { get; set; }
 
     #endregion
 
@@ -96,27 +96,32 @@ public partial class Index
             case < 410:
                 Width = "270";
                 _displayIcon = true;
-                _textOverflow = TextOverflow.Wrap;
+                TextOverflow = TextOverflow.Wrap;
+                DataLabelFontSize = "11px";
                 break;
             case < 468:
                 Width = "300";
                 _displayIcon = false;
-                _textOverflow = TextOverflow.Wrap;
+                TextOverflow = TextOverflow.Wrap;
+                DataLabelFontSize = "12px";
                 break;
             case < 769:
                 Width = "500";
                 _displayIcon = false;
-                _textOverflow = TextOverflow.Wrap;
+                TextOverflow = TextOverflow.Wrap;
+                DataLabelFontSize = "13px";
                 break;
             case < 1000:
                 Width = "730";
                 _displayIcon = false;
-                _textOverflow = TextOverflow.None;
+                TextOverflow = TextOverflow.None;
+                DataLabelFontSize = "14px";
                 break;
             case >= 1000:
                 Width = "730";
                 _displayIcon = false;
-                _textOverflow = TextOverflow.None;
+                TextOverflow = TextOverflow.None;
+                DataLabelFontSize = "14px";
                 break;
             default:
                 Width = "730";

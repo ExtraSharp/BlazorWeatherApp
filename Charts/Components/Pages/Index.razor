@@ -3,12 +3,6 @@
 @inject IJSRuntime Js
 @rendermode InteractiveServer
 @using Syncfusion.Blazor.DropDowns
-@using Syncfusion.Blazor.HeatMap
-@using Syncfusion.Blazor.Navigations
-
-@* Todo
-- link to long/lat picker
-*@
 
 <PageTitle>Blazor Weather App</PageTitle>
 
@@ -34,30 +28,30 @@
     }
 </script>
 
-
-    <div class="input-section">
-        <div class="control-wrapper">
-            <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
-                <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange"/>
-                <ComboBoxFieldSettings Value="ID" Text="Text"></ComboBoxFieldSettings>
-            </SfComboBox>
-        </div>
-        Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
-        Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
-        @if (_displayIcon)
-        {
-            <button @onclick="RefreshData" type="button" class="btn btn-primary" style="font-family: Lucida Sans Unicode;">&#x21bb;</button>
-        }
-        else
-        {
-            <button @onclick="RefreshData" type="button" class="btn btn-primary">Refresh</button>
-        }
-        @if (IsDataAvailable == false)
-        {
-            <br/>
-            <span style="color: red">Please choose coordinates inside Germany.</span>
-        }
+<div class="input-section">
+    <div class="control-wrapper">
+        <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
+            <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange"/>
+            <ComboBoxFieldSettings Value="ID" Text="Text"></ComboBoxFieldSettings>
+        </SfComboBox>
     </div>
+    Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
+    Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
+    @if (_displayIcon)
+    {
+        <button @onclick="RefreshData" type="button" class="btn btn-primary" style="font-family: Lucida Sans Unicode;">&#x21bb;</button>
+    }
+    else
+    {
+        <button @onclick="RefreshData" type="button" class="btn btn-primary">Refresh</button>
+    }
+    @if (IsDataAvailable == false)
+    {
+        <br/>
+        <span style="color: red">Please choose coordinates inside Germany.</span>
+    }
+</div>
+
 <div class="container">
     <div class="item">
         <h3>Current Weather</h3>
@@ -84,33 +78,7 @@
             else
             {
                 <h3>Climate Chart for @StationName</h3>
-                <SfHeatMap DataSource="@HeatMapData">
-                    <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect" Format="{value} °C">
-                        <HeatMapCellBorder Width="1" Radius="4" Color="White"></HeatMapCellBorder>
-                    </HeatMapCellSettings>
-                    <HeatMapXAxis Labels="@XLabels">
-                        <HeatMapXAxisTextStyle FontFamily="inherit" TextOverflow="TextOverflow.Wrap"></HeatMapXAxisTextStyle>
-                    </HeatMapXAxis>
-                    <HeatMapYAxis Labels="@YLabels">
-                        <HeatMapYAxisTextStyle FontFamily="inherit" TextOverflow="@_textOverflow"></HeatMapYAxisTextStyle>
-                    </HeatMapYAxis>
-                    <HeatMapPaletteSettings Type="PaletteType.Gradient">
-                        <HeatMapPalettes>
-                            <HeatMapPalette StartValue="-21" EndValue="-10" MinColor="#7575ff" MaxColor="#b0b0ff"></HeatMapPalette>
-                            <HeatMapPalette StartValue="-10" EndValue="0" MinColor="#b2b2ff" MaxColor="#ffffff"></HeatMapPalette>
-                            <HeatMapPalette StartValue="0" EndValue="5" MinColor="#e6e6ff" MaxColor="#fffdfc"></HeatMapPalette>
-                            <HeatMapPalette StartValue="5" EndValue="10" MinColor="#fffbf8" MaxColor="#ffdbb7"></HeatMapPalette>
-                            <HeatMapPalette StartValue="10" EndValue="15" MinColor="#ffdab5" MaxColor="#ffb871"></HeatMapPalette>
-                            <HeatMapPalette StartValue="15" EndValue="20" MinColor="#ffb56b" MaxColor="#ff9429"></HeatMapPalette>
-                            <HeatMapPalette StartValue="20" EndValue="25" MinColor="#ff9327" MaxColor="#FF7300"></HeatMapPalette>
-                            <HeatMapPalette StartValue="25" EndValue="30" MinColor="#ff7100" MaxColor="#ff5100"></HeatMapPalette>
-                            <HeatMapPalette StartValue="30" EndValue="35" MinColor="#ff4d00" MaxColor="#ff2e00"></HeatMapPalette>
-                            <HeatMapPalette StartValue="35" EndValue="43" MinColor="#ff2c00" MaxColor="#ea0000"></HeatMapPalette>
-                        </HeatMapPalettes>
-                    </HeatMapPaletteSettings>
-                    <HeatMapLegendSettings Visible="false">
-                    </HeatMapLegendSettings>
-                </SfHeatMap>
+                <HeatMap HeatMapData="@HeatMapData" TextOverflow="@TextOverflow" FontSize="@DataLabelFontSize" />
             }
         }
     </div>
