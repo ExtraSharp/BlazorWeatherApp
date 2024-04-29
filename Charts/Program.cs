@@ -6,13 +6,15 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddSingleton<ApiService>();
 
+IConfigurationRoot configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json")
+    .Build();
 
-
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NBaF5cXmZCekx0QXxbf1x0ZFZMZFlbQXZPIiBoS35RckVgW3pfdnBWR2hUVERz");
+var syncfusionKey = configuration["SyncfusionLicenseKey"];
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
 
 var app = builder.Build();
-//Register Syncfusion license https://help.syncfusion.com/common/essential-studio/licensing/how-to-generate
-//Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("YOUR LICENSE KEY");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

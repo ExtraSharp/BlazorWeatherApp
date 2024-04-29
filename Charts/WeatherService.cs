@@ -1,6 +1,4 @@
-﻿using Syncfusion.Blazor.Charts.Chart.Internal;
-
-namespace Server;
+﻿namespace Server;
 
 public class WeatherService(string latitude, string longitude)
 {
