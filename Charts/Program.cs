@@ -6,13 +6,20 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddSingleton<ApiService>();
 
-IConfigurationRoot configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json")
-    .Build();
+//IConfigurationRoot configuration = new ConfigurationBuilder()
+//    .SetBasePath(Directory.GetCurrentDirectory())
+//    .AddJsonFile("appsettings.json")
+//    .Build();
 
-var syncfusionKey = configuration["SyncfusionLicenseKey"];
+//var syncfusionKey = configuration["SyncfusionLicenseKey"];
+//Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+
+// Retrieve Syncfusion license key from environment variable
+var syncfusionKey = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY");
+
+// Register Syncfusion license key
 Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+
 
 var app = builder.Build();
 
