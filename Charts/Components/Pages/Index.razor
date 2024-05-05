@@ -1,7 +1,7 @@
 ﻿@page "/"
 @inject ApiService ApiService
 @inject IJSRuntime Js
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
 @using Syncfusion.Blazor.DropDowns
 
 <PageTitle>Blazor Weather App</PageTitle>

@@ -68,9 +68,9 @@ public partial class Index
     protected override async Task OnInitializedAsync()
     {
         SetInitialCoordinates();
-
         await LoadStationList();
         await RefreshData();
+        
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
