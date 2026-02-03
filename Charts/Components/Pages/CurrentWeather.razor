@@ -1,61 +1,60 @@
-﻿@using Server.Models
+@using Server.Models
 @if (CurrentWeatherData == null)
 {
     <p>Loading....</p>
 }
 else
 {
-    <div class="current-temp">
-        @switch (Icon)
-        {
-            case "sunny":
-                @:<img src="/images/sunny.png" alt="Sunny" id="weatherImage">
-                break;
+    <div class="current-weather">
+        <div class="current-temp">
+            @switch (Icon)
+            {
+                case "sunny":
+                    @:<img src="/images/sunny.png" alt="Sunny" class="weather-icon">
+                    break;
 
-            case "cloudy":
-                @:<img src="/images/cloudy.png" alt="Cloudy" id="weatherImage">
-                break;
+                case "cloudy":
+                    @:<img src="/images/cloudy.png" alt="Cloudy" class="weather-icon">
+                    break;
 
-            case "partly-cloudy":
-                @:<img src="/images/partly-cloudy.png" alt="Partly Cloudy" id="weatherImage">
-                break;
+                case "partly-cloudy":
+                    @:<img src="/images/partly-cloudy.png" alt="Partly Cloudy" class="weather-icon">
+                    break;
 
-            case "rainy":
-                @:<img src="/images/rainy.png" alt="Rainy" id="weatherImage">
-                break;
+                case "rainy":
+                    @:<img src="/images/rainy.png" alt="Rainy" class="weather-icon">
+                    break;
 
-            case "thunderstorm":
-                @:<img src="/images/thunderstorm.png" alt="Thunderstorm" id="weatherImage">
-                break;
+                case "thunderstorm":
+                    @:<img src="/images/thunderstorm.png" alt="Thunderstorm" class="weather-icon">
+                    break;
 
-            case "clear-night":
-                @:<img src="/images/clear-night.png" alt="Clear Night" id="weatherImage">
-                break;
+                case "clear-night":
+                    @:<img src="/images/clear-night.png" alt="Clear Night" class="weather-icon">
+                    break;
 
-            case "cloudy-night":
-                @:<img src="/images/cloudy-night.png" alt="Cloudy Night" id="weatherImage">
-                break;
-        }
-        <span class="value" id="temperature">@Temperature °C</span>
-    </div>
-
-    <div class="data-group">
-        <div class="data-item">
-            <i class="fas fa-tint"></i>
-            <span class="label">Dew Point:</span>
-            <span class="value" id="dewpoint">@(DewPoint) °C</span>
+                case "cloudy-night":
+                    @:<img src="/images/cloudy-night.png" alt="Cloudy Night" class="weather-icon">
+                    break;
+            }
+            <span class="temp-value">@Temperature °C</span>
         </div>
-        <div class="data-item">
-            <i class="fas fa-water"></i>
-            <span class="label">Humidity:</span>
-            <span class="value" id="humidity">@Humidity %</span>
+
+        <div class="metric-list">
+            <div class="metric-row">
+                <span class="metric-label">Dew Point</span>
+                <span class="metric-value">@(DewPoint) °C</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Humidity</span>
+                <span class="metric-value">@Humidity %</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Cloud Cover</span>
+                <span class="metric-value">@CloudCover %</span>
+            </div>
         </div>
-        <div class="data-item">
-            <i class="fas fa-cloud"></i>
-            <span class="label">Cloud Cover:</span>
-            <span class="value" id="cloudCover">@CloudCover %</span>
-        </div>
-        <span class="last-update">(Last updated: @LastUpdatedTime)</span>
+        <span class="last-update">Last updated @LastUpdatedTime</span>
     </div>
 }
 

@@ -1,54 +1,69 @@
-﻿namespace Server;
+namespace Server;
 
-public class WeatherService(string latitude, string longitude)
+public class WeatherService(ApiService apiService)
 {
-    private readonly ApiService _apiService = new();
+    private readonly ApiService _apiService = apiService;
 
-    public async Task<IReadOnlyCollection<WeatherDataModel>> GetChartDataForDisplay()
+    public async Task<IReadOnlyCollection<WeatherDataModel>> GetChartDataForDisplay(string latitude, string longitude)
     {
-        var entireMonth = await FetchEntireMonth();
+        var entireMonth = await FetchEntireMonth(latitude, longitude);
         var dayModels = CreateDayModels(entireMonth);
 
         return GroupDayModels(dayModels);
     }
 
-    public async Task<List<WeatherDataModel>> GetClimateChartData()
+    public async Task<List<WeatherDataModel>> GetClimateChartData(string latitude, string longitude)
     {
-        int year = 2023;
-        
+        const int year = 2023;
+        const int maxConcurrentMonths = 4;
         List<WeatherDataModel> output = new();
 
-        for (int j = 1; j <= 12; j++)
-        {
-            year = 2023;
-
-            List<WeatherDataModel> monthlyAverages = new();
-            List<WeatherDataModel> chartData = new();
-
-            for (int i = 0; i < 5; i++)
+        using var monthThrottle = new SemaphoreSlim(maxConcurrentMonths);
+        var monthTasks = Enumerable.Range(1, 12)
+            .Select(async month =>
             {
-                List<WeatherModel> yearData = await FetchEntireYear(year - i, j);
+                await monthThrottle.WaitAsync();
+                try
+                {
+                    var yearTasks = Enumerable.Range(0, 5)
+                        .Select(i => FetchEntireYear(year - i, month, latitude, longitude))
+                        .ToArray();
 
-                monthlyAverages = CalculateMonthlyAverages(yearData);
+                    var yearDataSets = await Task.WhenAll(yearTasks);
+                    var chartData = yearDataSets
+                        .Select(data => CalculateMonthlySummary(CalculateMonthlyAverages(data)))
+                        .ToList();
 
-                WeatherDataModel monthData = CalculateMonthlySummary(monthlyAverages);
+                    var finalData = CalculateFinalSummary(chartData);
+                    return (month, finalData);
+                }
+                finally
+                {
+                    monthThrottle.Release();
+                }
+            })
+            .ToArray();
 
-                chartData.Add(monthData);
-            }
-
-            WeatherDataModel finalData = CalculateFinalSummary(chartData);
-            output.Add(finalData);
-        }
-        
-        
+        var monthResults = await Task.WhenAll(monthTasks);
+        output.AddRange(monthResults
+            .OrderBy(result => result.month)
+            .Select(result => result.finalData));
 
         return output;
     }
 
     private List<WeatherDataModel> CalculateMonthlyAverages(List<WeatherModel> yearData)
     {
-        return yearData
+        var filtered = yearData
             .Where(data => data.Temperature != null)
+            .ToList();
+
+        if (filtered.Count == 0)
+        {
+            return new List<WeatherDataModel>();
+        }
+
+        return filtered
             .GroupBy(data => new { data.TimeStamp.Year, data.TimeStamp.Month, data.TimeStamp.Day })
             .Select(group => new WeatherDataModel
             {
@@ -66,6 +81,11 @@ public class WeatherService(string latitude, string longitude)
 
     private WeatherDataModel CalculateMonthlySummary(List<WeatherDataModel> monthlyAverages)
     {
+        if (monthlyAverages.Count == 0)
+        {
+            return new WeatherDataModel();
+        }
+
         var monthData = new WeatherDataModel
         {
             MaxTemp = monthlyAverages.Average(day => day.MaxTemp),
@@ -80,6 +100,11 @@ public class WeatherService(string latitude, string longitude)
 
     private WeatherDataModel CalculateFinalSummary(List<WeatherDataModel> chartData)
     {
+        if (chartData.Count == 0)
+        {
+            return new WeatherDataModel();
+        }
+
         var finalData = new WeatherDataModel
         {
             RecordHigh = chartData.Max(day => day.MonthlyHigh),
@@ -94,27 +119,26 @@ public class WeatherService(string latitude, string longitude)
         return finalData;
     }
 
-    private async Task<List<WeatherModel>> FetchEntireYear(int year, int month)
+    private async Task<List<WeatherModel>> FetchEntireYear(int year, int month, string latitude, string longitude)
     {
-        var tasks = new List<Task<MultipleWeatherResponseModel?>>();
-
         int days = DateTime.DaysInMonth(year, month);
+        var response = await _apiService.GetEntireData(
+            $"{year}-{month:00}-01",
+            $"{year}-{month:00}-{days:00}",
+            latitude,
+            longitude);
 
-        tasks.Add(_apiService.GetEntireData($"{year.ToString()}-{month:00}-01", $"{year.ToString()}-{month:00}-{days:00}", latitude, longitude));
-
-        var responses = await Task.WhenAll(tasks);
-        var weatherData = responses.SelectMany(response => response?.weather ?? Enumerable.Empty<WeatherModel>());
+        var weatherData = response?.weather ?? Enumerable.Empty<WeatherModel>();
 
         return weatherData.ToList();
-
     }
 
-    private async Task<List<WeatherModel>> FetchEntireMonth()
+    private async Task<List<WeatherModel>> FetchEntireMonth(string latitude, string longitude)
     {
         var today = DateTime.Today;
         var desiredDate = new DateTime(today.Year, today.Month, today.Day);
 
-        var responses = await FetchHistoricalWeatherData(desiredDate, true);
+        var responses = await FetchHistoricalWeatherData(desiredDate, true, latitude, longitude);
 
         return responses
             .Where(r => r != null)
@@ -155,34 +179,46 @@ public class WeatherService(string latitude, string longitude)
             .ToList();
     }
 
-    public async Task<IReadOnlyCollection<WeatherDataModel>> GetWeatherDataForDisplay()
+    public async Task<IReadOnlyCollection<WeatherDataModel>> GetWeatherDataForDisplay(string latitude, string longitude)
     {
         var desiredDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
 
-        var responses = await FetchHistoricalWeatherData(desiredDate);
+        var responses = await FetchHistoricalWeatherData(desiredDate, false, latitude, longitude);
         var mergedResponse = MergeWeatherResponses(responses, desiredDate.Day);
 
         return CalculateDailyMeans(mergedResponse);
     }
 
-    public async Task<MultipleWeatherResponseModel?[]> FetchHistoricalWeatherData(DateTime desiredDate, bool monthly = false)
+    public async Task<MultipleWeatherResponseModel?[]> FetchHistoricalWeatherData(
+        DateTime desiredDate,
+        bool monthly,
+        string latitude,
+        string longitude)
     {
         var tasks = new List<Task<MultipleWeatherResponseModel?>>();
 
         if (monthly)
         {
             var firstDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month, 1);
-            var lastDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month + 1, 1);
+            var lastDayOfMonth = firstDayOfMonth.AddMonths(1);
 
-            tasks.Add(_apiService.GetMonthlyData(firstDayOfMonth.ToString("yyyy-MM-dd"), lastDayOfMonth.ToString("yyyy-MM-dd"), latitude, longitude));
+            tasks.Add(_apiService.GetMonthlyData(
+                firstDayOfMonth.ToString("yyyy-MM-dd"),
+                lastDayOfMonth.ToString("yyyy-MM-dd"),
+                latitude,
+                longitude));
 
             // Loop for going back year by year
             for (var i = 1; i <= 20; i++)
             {
                 var yearToSubtract = desiredDate.Year - i;
                 var firstDayOfYear = new DateTime(yearToSubtract, desiredDate.Month, 1);
-                var lastDayOfYear = new DateTime(yearToSubtract, desiredDate.Month + 1, 1);
-                tasks.Add(_apiService.GetMonthlyData(firstDayOfYear.ToString("yyyy-MM-dd"), lastDayOfYear.ToString("yyyy-MM-dd"), latitude, longitude));
+                var lastDayOfYear = firstDayOfYear.AddMonths(1);
+                tasks.Add(_apiService.GetMonthlyData(
+                    firstDayOfYear.ToString("yyyy-MM-dd"),
+                    lastDayOfYear.ToString("yyyy-MM-dd"),
+                    latitude,
+                    longitude));
             }
         }
         else
@@ -203,7 +239,7 @@ public class WeatherService(string latitude, string longitude)
 
         var weatherList = responses
             .Where(response => response?.weather != null)
-            .SelectMany(response => response?.weather)
+            .SelectMany(response => response?.weather ?? Array.Empty<WeatherModel>())
             .Where(weather => weather?.TimeStamp.Day == day)
             .GroupBy(weather => weather?.TimeStamp)
             .Select(group => group.First())
@@ -216,8 +252,14 @@ public class WeatherService(string latitude, string longitude)
 
     private static List<WeatherDataModel> CalculateDailyMeans(MultipleWeatherResponseModel mergedResponse)
     {
+        if (mergedResponse.weather == null || mergedResponse.weather.Length == 0)
+        {
+            return new List<WeatherDataModel>();
+        }
+
         var groupedByDay = mergedResponse.weather
-            .GroupBy(w => w.TimeStamp.Date);
+            .Where(w => w != null)
+            .GroupBy(w => w!.TimeStamp.Date);
 
         return groupedByDay.Select(group => new WeatherDataModel
             {

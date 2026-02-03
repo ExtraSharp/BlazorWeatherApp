@@ -1,5 +1,6 @@
-﻿@page "/"
+@page "/"
 @inject ApiService ApiService
+@inject WeatherService WeatherService
 @inject IJSRuntime Js
 @rendermode @(new InteractiveServerRenderMode(prerender:false))
 @using Syncfusion.Blazor.DropDowns
@@ -28,69 +29,99 @@
     }
 </script>
 
-<div class="input-section">
-    <div class="control-wrapper">
-        <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
-            <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange"/>
-            <ComboBoxFieldSettings Value="ID" Text="Text"></ComboBoxFieldSettings>
-        </SfComboBox>
-    </div>
-    Lat: <input type="text" @bind="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
-    Long: <input type="text" @bind="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.]/g, '');">
-    @if (_displayIcon)
-    {
-        <button @onclick="RefreshData" type="button" class="btn btn-primary" style="font-family: Lucida Sans Unicode;">&#x21bb;</button>
-    }
-    else
-    {
-        <button @onclick="RefreshData" type="button" class="btn btn-primary">Refresh</button>
-    }
-    @if (IsDataAvailable == false)
-    {
-        <br/>
-        <span style="color: red">Please choose coordinates inside Germany.</span>
-    }
-</div>
+<div class="page-shell">
+    <header class="page-header">
+        <div class="page-title">
+            <span class="eyebrow">Blazor Weather</span>
+            <h1>Germany Weather Overview</h1>
+            <p>Live conditions, historical averages, and monthly trends.</p>
+        </div>
+        <div class="page-status">
+            <span class="status-label">Station</span>
+            <span class="status-value">@(!string.IsNullOrWhiteSpace(StationName) ? StationName : "Not selected")</span>
+            <span class="status-subtitle">Last updated @LastUpdatedTime</span>
+        </div>
+    </header>
 
-<div class="container">
-    <div class="item">
-        <h3>Current Weather</h3>
-        <h4>Station: @StationName</h4>
-        <CurrentWeather CurrentWeatherData="CurrentWeather" Temperature="@Temperature" DewPoint="@DewPoint" Humidity="@Humidity" CloudCover="@CloudCover" Icon="@Icon" LastUpdatedTime="@LastUpdatedTime" />
-    </div>
-
-    <div class="item">
-        <h3>Historical Data for @DateTime.Now.ToString("dd MMM")</h3>
-        <HistoricalAverages Data="@HistoricalAverages"></HistoricalAverages>
-    </div>
-    
-    <div class="item">
-        @if (_climateChartVisible == false)
+    <section class="card filters-card">
+        <div class="filters-grid">
+            <div class="field">
+                <label class="field-label">Station</label>
+                <div class="control-wrapper">
+                    <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
+                        <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange"/>
+                        <ComboBoxFieldSettings Value="ID" Text="Text"></ComboBoxFieldSettings>
+                    </SfComboBox>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field-label">Latitude</label>
+                <input class="text-input" type="text" @bind="Latitude" aria-label="Latitude" placeholder="Latitude" pattern="-?\\d+(\\.\\d*)?" oninput="this.value = this.value.replace(/[^0-9\\.-]/g, '');">
+            </div>
+            <div class="field">
+                <label class="field-label">Longitude</label>
+                <input class="text-input" type="text" @bind="Longitude" aria-label="Longitude" placeholder="Longitude" pattern="-?\\d+(\\.\\d*)?" oninput="this.value = this.value.replace(/[^0-9\\.-]/g, '');">
+            </div>
+            <div class="field actions-field">
+                <label class="field-label">Actions</label>
+                @if (_displayIcon)
+                {
+                    <button @onclick="RefreshData" type="button" class="btn btn-primary refresh-button" aria-label="Refresh">&#x21bb;</button>
+                }
+                else
+                {
+                    <button @onclick="RefreshData" type="button" class="btn btn-primary refresh-button">Refresh</button>
+                }
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
         {
-            <button @onclick="GenerateClimateChart" type="button" class="btn btn-primary">Load Climate Chart</button>
+            <div class="inline-alert">@ErrorMessage</div>
         }
-        else
-        {
-            if (HeatMapData == null)
+    </section>
+
+    <section class="section-grid">
+        <div class="card">
+            <h3>Current Weather</h3>
+            <CurrentWeather CurrentWeatherData="CurrentWeather" Temperature="@Temperature" DewPoint="@DewPoint" Humidity="@Humidity" CloudCover="@CloudCover" Icon="@Icon" LastUpdatedTime="@LastUpdatedTime" />
+        </div>
+
+        <div class="card">
+            <h3>Historical Data for @DateTime.Now.ToString("dd MMM")</h3>
+            <HistoricalAverages Data="@HistoricalAverages"></HistoricalAverages>
+        </div>
+    </section>
+
+    <section class="card chart-card">
+        <div class="card-header">
+            <h3>Climate Chart for @StationName</h3>
+        </div>
+        <div class="chart-body">
+            @if (!string.IsNullOrWhiteSpace(ClimateErrorMessage))
             {
-                <span>Loading climate data...</span>
+                <span class="chart-error">@ClimateErrorMessage</span>
+            }
+            else if (HeatMapData == null)
+            {
+                <span class="chart-loading">Loading climate data...</span>
             }
             else
             {
-                <h3>Climate Chart for @StationName</h3>
-                <HeatMap HeatMapData="@HeatMapData" TextOverflow="@TextOverflow" FontSize="@DataLabelFontSize" />
+                <div class="heatmap-wrapper">
+                    <HeatMap HeatMapData="@HeatMapData" TextOverflow="@TextOverflow" FontSize="@DataLabelFontSize" />
+                </div>
             }
-        }
-    </div>
-    
-    <div class="item">
-        <h3>Mean Temperatures and Precipitation for @DateTime.Now.ToString("MMMM")</h3>
-        <WeatherChart Temperatures="@Temperatures" Width="@Width" @rendermode="@RenderMode.InteractiveServer" />
-    </div>
-    
-    <div class="get-source-code">
-        <a href="https://github.com/extrasharp/BlazorWeatherApp" type="button" class="btn btn-primary">Source Code</a>
-    </div>
+        </div>
+    </section>
+
+    <section class="card chart-card">
+        <div class="card-header">
+            <h3>Mean Temperatures and Precipitation for @DateTime.Now.ToString("MMMM")</h3>
+        </div>
+        <div class="chart-body">
+            <WeatherChart Temperatures="@Temperatures" Width="@Width" @rendermode="@RenderMode.InteractiveServer" />
+        </div>
+    </section>
 </div>
 
 @code {

@@ -1,8 +1,6 @@
-﻿using System.Security.AccessControl;
-
 namespace Server.Components.Pages;
 
-public partial class Index
+public partial class Index : IAsyncDisposable
 {
     #region Private Members
     public class WeatherStations
@@ -13,6 +11,7 @@ public partial class Index
         public float Longitude { get; set; }
     }
     public object HeatMapData { get; set; }
+    private string? ClimateErrorMessage { get; set; }
     private DateTime LastUpdated { get; set; }
 
     private string LastUpdatedTime
@@ -24,21 +23,19 @@ public partial class Index
         }
     }
 
-    private WeatherService? _weatherService;
-    private string Width { get; set; } = "730";
+    private DotNetObjectReference<Index>? _dotNetRef;
+    private string Width { get; set; } = "900";
     private List<ChartDataModel> Temperatures = [];
     private int ViewportWidth { get; set; }
-    private int ViewportHeight { get; set; }
     private WeatherResponseModel? CurrentWeather { get; set; }
     private string? StationName { get; set; }
-    private bool IsDataAvailable { get; set; } = true;
+    private string? ErrorMessage { get; set; }
     private WeatherDataModel HistoricalAverages { get; set; } = new();
     private double? CloudCover { get; set; }
     private string Latitude { get; set; }
-    private List<WeatherStations> StationData = new List<WeatherStations>();
+    private List<WeatherStations> StationData = new();
     private string Longitude { get; set; }
     private string? Icon { get; set; }
-    private static bool _bigWindowSize = true;
     private double? _temperature;
     private string DataLabelFontSize { get; set; } = "14px";
 
@@ -60,7 +57,7 @@ public partial class Index
     }
 
     private bool _climateChartVisible = false;
-    private TextOverflow TextOverflow { get; set; }
+    private TextOverflow TextOverflow { get; set; } = TextOverflow.None;
 
     #endregion
 
@@ -70,72 +67,77 @@ public partial class Index
         SetInitialCoordinates();
         await LoadStationList();
         await RefreshData();
-        
+
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            StateHasChanged();
-            await Js.InvokeVoidAsync("window.registerViewportChangeCallback", DotNetObjectReference.Create(this));
-            // var dimension = await Js.InvokeAsync<WindowDimension>("getWindowDimensions");
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync("window.registerViewportChangeCallback", _dotNetRef);
         }
     }
 
     [JSInvokable]
     public void OnResize(int width, int height)
     {
-        if (ViewportWidth == width && ViewportHeight == height) return;
+        var previousWidth = ViewportWidth;
+
+        if (previousWidth == width) return;
 
         ViewportWidth = width;
-        ViewportHeight = height;
 
-        switch (ViewportWidth)
-        {
-            case < 410:
-                Width = "270";
-                _displayIcon = true;
-                TextOverflow = TextOverflow.Wrap;
-                DataLabelFontSize = "10px";
-                break;
-            case < 468:
-                Width = "300";
-                _displayIcon = false;
-                TextOverflow = TextOverflow.Wrap;
-                DataLabelFontSize = "10px";
-                break;
-            case < 769:
-                Width = "500";
-                _displayIcon = false;
-                TextOverflow = TextOverflow.Wrap;
-                DataLabelFontSize = "13px";
-                break;
-            case < 1000:
-                Width = "730";
-                _displayIcon = false;
-                TextOverflow = TextOverflow.None;
-                DataLabelFontSize = "14px";
-                break;
-            case >= 1000:
-                Width = "730";
-                _displayIcon = false;
-                TextOverflow = TextOverflow.None;
-                DataLabelFontSize = "14px";
-                break;
-            default:
-                Width = "730";
-                _displayIcon = false;
-                break;
-        }
+        UpdateViewportSettings(width);
 
         StateHasChanged();
+    }
+
+    private void UpdateViewportSettings(int width)
+    {
+        if (width < 576)
+        {
+            Width = "320";
+            _displayIcon = true;
+            TextOverflow = TextOverflow.Wrap;
+            DataLabelFontSize = "10px";
+            return;
+        }
+
+        if (width < 768)
+        {
+            Width = "520";
+            _displayIcon = false;
+            TextOverflow = TextOverflow.Wrap;
+            DataLabelFontSize = "12px";
+            return;
+        }
+
+        if (width < 992)
+        {
+            Width = "720";
+            _displayIcon = false;
+            TextOverflow = TextOverflow.Wrap;
+            DataLabelFontSize = "13px";
+            return;
+        }
+
+        Width = "900";
+        _displayIcon = false;
+        TextOverflow = TextOverflow.None;
+        DataLabelFontSize = "14px";
     }
 
     private async Task LoadStationList()
     {
         StationData.Clear();
         var apiResponse = await ApiService.GetAllWeatherStations();
+
+        if (apiResponse?.sources == null || apiResponse.sources.Length == 0)
+        {
+            ErrorMessage = "Unable to load station list. Please try again later.";
+            return;
+        }
 
         StationData.AddRange(apiResponse.sources
             .Where(weatherStation => weatherStation.StationId != null) // Filter out null StationId
@@ -171,97 +173,131 @@ public partial class Index
     
     private async Task RefreshData()
     {
+        ErrorMessage = null;
+        ClimateErrorMessage = null;
         CurrentWeather = null;
         HeatMapData = null;
-        _climateChartVisible = false;
+        _climateChartVisible = true;
 
-        if (string.IsNullOrWhiteSpace(Latitude) || string.IsNullOrWhiteSpace(Longitude) || !IsValidCoordinates())
+        if (!TryGetCoordinates(out var latitude, out var longitude))
         {
-            // Handle validation errors
+            ErrorMessage = "Please enter valid coordinates (lat -90 to 90, lon -180 to 180).";
             return;
         }
 
-        _weatherService = new WeatherService(Latitude, Longitude);
-
-        CurrentWeather = await ApiService.GetCurrentWeatherData(Latitude, Longitude);
+        Latitude = latitude;
+        Longitude = longitude;
+        CurrentWeather = await ApiService.GetCurrentWeatherData(latitude, longitude);
 
         if (CurrentWeather?.weather != null)
         {
             AssignValues();
-            await GetHistoricDataForToday();
-            await GetChartData();
-            IsDataAvailable = true;
+            await GetHistoricDataForToday(latitude, longitude);
+            await GetChartData(latitude, longitude);
+            await GetClimateChartData();
         }
         else
         {
-            IsDataAvailable = false;
+            ErrorMessage = "No weather data is available for these coordinates.";
         }
     }
 
     private async Task GetClimateChartData()
     {
         _climateChartVisible = true;
+        ClimateErrorMessage = null;
+        StateHasChanged();
+        await Task.Yield();
 
-        if (_weatherService != null)
+        if (!TryGetCoordinates(out var latitude, out var longitude))
         {
-            var weatherData = await _weatherService.GetClimateChartData();
-
-            double[,] matrix = new double[13, 7];
-
-            // Populate the matrix with data from weatherData
-            for (int i = 0; i < 12; i++)
-            {
-                matrix[i, 0] = Math.Round(weatherData[i].RecordLow, 1);
-                matrix[i, 1] = Math.Round(weatherData[i].MonthlyLow, 1);
-                matrix[i, 2] = Math.Round(weatherData[i].MinTemp, 1);
-                matrix[i, 3] = Math.Round(weatherData[i].MeanTemp, 1);
-                matrix[i, 4] = Math.Round(weatherData[i].MaxTemp, 1);
-                matrix[i, 5] = Math.Round(weatherData[i].MonthlyHigh, 1);
-                matrix[i, 6] = Math.Round(weatherData[i].RecordHigh, 1);
-            }
-
-            // Calculate aggregated data
-            double minRecordLow = weatherData.Min(data => data.RecordLow);
-            double avgMonthlyLow = weatherData.Average(data => data.MonthlyLow);
-            double avgMinTemp = weatherData.Average(data => data.MinTemp);
-            double avgMeanTemp = weatherData.Average(data => data.MeanTemp);
-            double avgMaxTemp = weatherData.Average(data => data.MaxTemp);
-            double avgMonthlyHigh = weatherData.Average(data => data.MonthlyHigh);
-            double maxRecordHigh = weatherData.Max(data => data.RecordHigh);
-
-            // Add aggregated data as a new row to the matrix
-            matrix[12, 0] = Math.Round(minRecordLow, 1);
-            matrix[12, 1] = Math.Round(avgMonthlyLow, 1);
-            matrix[12, 2] = Math.Round(avgMinTemp, 1);
-            matrix[12, 3] = Math.Round(avgMeanTemp, 1);
-            matrix[12, 4] = Math.Round(avgMaxTemp, 1);
-            matrix[12, 5] = Math.Round(avgMonthlyHigh, 1);
-            matrix[12, 6] = Math.Round(maxRecordHigh, 1);
-
-            HeatMapData = matrix;
+            ClimateErrorMessage = "Please enter valid coordinates (lat -90 to 90, lon -180 to 180).";
+            return;
         }
+
+        var weatherData = await WeatherService.GetClimateChartData(latitude, longitude);
+
+        if (weatherData.Count == 0)
+        {
+            ClimateErrorMessage = "No climate data is available for these coordinates.";
+            return;
+        }
+
+        double[,] matrix = new double[13, 7];
+
+        // Populate the matrix with data from weatherData
+        for (int i = 0; i < 12 && i < weatherData.Count; i++)
+        {
+            matrix[i, 0] = Math.Round(weatherData[i].RecordLow, 1);
+            matrix[i, 1] = Math.Round(weatherData[i].MonthlyLow, 1);
+            matrix[i, 2] = Math.Round(weatherData[i].MinTemp, 1);
+            matrix[i, 3] = Math.Round(weatherData[i].MeanTemp, 1);
+            matrix[i, 4] = Math.Round(weatherData[i].MaxTemp, 1);
+            matrix[i, 5] = Math.Round(weatherData[i].MonthlyHigh, 1);
+            matrix[i, 6] = Math.Round(weatherData[i].RecordHigh, 1);
+        }
+
+        // Calculate aggregated data
+        double minRecordLow = weatherData.Min(data => data.RecordLow);
+        double avgMonthlyLow = weatherData.Average(data => data.MonthlyLow);
+        double avgMinTemp = weatherData.Average(data => data.MinTemp);
+        double avgMeanTemp = weatherData.Average(data => data.MeanTemp);
+        double avgMaxTemp = weatherData.Average(data => data.MaxTemp);
+        double avgMonthlyHigh = weatherData.Average(data => data.MonthlyHigh);
+        double maxRecordHigh = weatherData.Max(data => data.RecordHigh);
+
+        // Add aggregated data as a new row to the matrix
+        matrix[12, 0] = Math.Round(minRecordLow, 1);
+        matrix[12, 1] = Math.Round(avgMonthlyLow, 1);
+        matrix[12, 2] = Math.Round(avgMinTemp, 1);
+        matrix[12, 3] = Math.Round(avgMeanTemp, 1);
+        matrix[12, 4] = Math.Round(avgMaxTemp, 1);
+        matrix[12, 5] = Math.Round(avgMonthlyHigh, 1);
+        matrix[12, 6] = Math.Round(maxRecordHigh, 1);
+
+        HeatMapData = matrix;
     }
 
     public void OnChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, WeatherStations> args)
     {
         if (args.ItemData != null)
         {
-            Latitude = Math.Round(args.ItemData.Latitude, 2).ToString();
-            Longitude = Math.Round(args.ItemData.Longitude, 2).ToString();
+            Latitude = Math.Round(args.ItemData.Latitude, 2).ToString(CultureInfo.InvariantCulture);
+            Longitude = Math.Round(args.ItemData.Longitude, 2).ToString(CultureInfo.InvariantCulture);
         }
     }
 
-    private bool IsValidCoordinates()
+    private static bool TryGetCoordinateValue(string? value, out double result)
     {
-        var latitude = double.Parse(Latitude);
-        var longitude = double.Parse(Longitude);
+        result = 0;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
 
-        return latitude is <= 90 and >= -90 && longitude is <= 180 and >= -180;
+        var normalized = value.Trim().Replace(',', '.');
+        return double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
     }
 
-    private async Task GenerateClimateChart()
+    private bool TryGetCoordinates(out string latitude, out string longitude)
     {
-        await GetClimateChartData();
+        latitude = string.Empty;
+        longitude = string.Empty;
+
+        if (!TryGetCoordinateValue(Latitude, out var latitudeValue) ||
+            !TryGetCoordinateValue(Longitude, out var longitudeValue))
+        {
+            return false;
+        }
+
+        if (latitudeValue is < -90 or > 90 || longitudeValue is < -180 or > 180)
+        {
+            return false;
+        }
+
+        latitude = latitudeValue.ToString("0.00", CultureInfo.InvariantCulture);
+        longitude = longitudeValue.ToString("0.00", CultureInfo.InvariantCulture);
+        return true;
     }
 
     private void SetInitialCoordinates()
@@ -270,24 +306,18 @@ public partial class Index
         Longitude = "13.74";
     }
 
-    private async Task GetHistoricDataForToday()
+    private async Task GetHistoricDataForToday(string latitude, string longitude)
     {
-        if (_weatherService != null)
-        {
-            var weatherData = await _weatherService.GetWeatherDataForDisplay();
+        var weatherData = await WeatherService.GetWeatherDataForDisplay(latitude, longitude);
 
-            DisplayDailyMeans(weatherData);
-        }
+        DisplayDailyMeans(weatherData);
     }
 
-    private async Task GetChartData()
+    private async Task GetChartData(string latitude, string longitude)
     {
-        if (_weatherService != null)
-        {
-            var weatherData = await _weatherService.GetChartDataForDisplay();
+        var weatherData = await WeatherService.GetChartDataForDisplay(latitude, longitude);
 
-            PopulateChartData(weatherData);
-        }
+        PopulateChartData(weatherData);
     }
 
     private void PopulateChartData(IReadOnlyCollection<WeatherDataModel> groupedDayModels)
@@ -303,6 +333,12 @@ public partial class Index
 
     private void DisplayDailyMeans(IReadOnlyCollection<WeatherDataModel> days)
     {
+        if (days.Count == 0)
+        {
+            ErrorMessage = "No historical data is available for these coordinates.";
+            return;
+        }
+
         CalculateDailyMeans(days);
         FindRecordHighAndLow(days);
     }
@@ -321,7 +357,13 @@ public partial class Index
 
     private static double CalculateAverage<T>(IEnumerable<T> collection, Func<T, double> selector)
     {
-        return collection.Average(selector);
+        var items = collection as IList<T> ?? collection.ToList();
+        if (items.Count == 0)
+        {
+            return 0;
+        }
+
+        return items.Average(selector);
     }
 
     private void FindRecordHighAndLow(IReadOnlyCollection<WeatherDataModel> days)
@@ -343,7 +385,10 @@ public partial class Index
 
     private void AssignValues()
     {
-        if (CurrentWeather?.sources != null) StationName = CurrentWeather?.sources[0].StationName;
+        if (CurrentWeather?.sources != null && CurrentWeather.sources.Length > 0)
+        {
+            StationName = CurrentWeather.sources[0].StationName;
+        }
         Temperature = CurrentWeather?.weather?.Temperature;
         Humidity = CurrentWeather?.weather?.Humidity;
         DewPoint = CurrentWeather?.weather?.DewPoint;
@@ -369,4 +414,10 @@ public partial class Index
     }
 
     #endregion
+
+    public ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        return ValueTask.CompletedTask;
+    }
 }

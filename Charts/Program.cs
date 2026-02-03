@@ -1,10 +1,12 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddSingleton<ApiService>();
+builder.Services.AddScoped<WeatherService>();
+builder.Services.AddMemoryCache();
 
 //IConfigurationRoot configuration = new ConfigurationBuilder()
 //    .SetBasePath(Directory.GetCurrentDirectory())
@@ -18,7 +20,10 @@ builder.Services.AddSingleton<ApiService>();
 var syncfusionKey = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY");
 
 // Register Syncfusion license key
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+if (!string.IsNullOrWhiteSpace(syncfusionKey))
+{
+    Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+}
 
 
 var app = builder.Build();
