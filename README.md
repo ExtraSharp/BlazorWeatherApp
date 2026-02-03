@@ -6,7 +6,7 @@ Simple Blazor Web application that reads current weather data from an api and di
 
 ## Technologies Used
 * C#
-* .NET 8.0
+* .NET 10.0
 * Blazor Web App
 * RestAPI
 * Syncfusion Blazor Components
