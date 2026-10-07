@@ -173,6 +173,16 @@ p {
     font-size: 1.1rem;
 }
 
+.card-subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.month-nav {
+    display: flex;
+    gap: var(--space-sm);
+}
+
 .chart-card .card-header {
     display: flex;
     justify-content: space-between;
@@ -180,6 +190,7 @@ p {
     gap: var(--space-md);
     margin-bottom: var(--space-md);
 }
+
 
 .chart-body {
     min-height: 240px;

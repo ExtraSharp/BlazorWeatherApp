@@ -1,7 +1,7 @@
 @using Syncfusion.Blazor.HeatMap
-@using Server.Models
 
 <SfHeatMap DataSource="@HeatMapData">
+    <HeatMapEvents CellRendering="OnCellRender" />
     <HeatMapCellSettings ShowLabel="true" TileType="CellType.Rect">
         <HeatMapCellBorder Width="1" Radius="4" Color="White"></HeatMapCellBorder>
         <HeatMapCellTextStyle Size="@FontSize" />
@@ -31,9 +31,84 @@
 </SfHeatMap>
 
 @code {
-    [Parameter] public required object HeatMapData { get; set; } 
+    [Parameter] public double[,] HeatMapData { get; set; } = new double[0, 0];
     [Parameter] public TextOverflow TextOverflow { get; set; }
     [Parameter] public string? FontSize { get; set; }
-    string[] _xLabels = new string[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Year" };
-    string[] _yLabels = new string[] { "Record Low", "Mean Min", "Daily Min", "Daily Mean", "Daily Max", "Mean Max", "Record High" };
+
+    private static readonly string[] _xLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Year"];
+    private static readonly string[] _yLabels = ["Record Low", "Precipitation (mm)", "Sunshine Hours", "Mean Min", "Daily Min", "Daily Mean", "Daily Max", "Mean Max", "Record High"];
+
+    private void OnCellRender(HeatMapCellRenderEventArgs args)
+    {
+        if (args.CellValue == null)
+        {
+            return;
+        }
+
+        if (args.YLabel == "Precipitation (mm)")
+        {
+            if (TryGetValue(args.CellValue, out var value))
+            {
+                args.CellColor = InterpolateColor(value, 0, 200, "#e8f5e9", "#16a34a");
+            }
+        }
+        else if (args.YLabel == "Sunshine Hours")
+        {
+            if (TryGetValue(args.CellValue, out var value))
+            {
+                args.CellColor = InterpolateColor(value, 0, 300, "#e5e7eb", "#facc15");
+            }
+        }
+    }
+
+    private static bool TryGetValue(object value, out double result)
+    {
+        if (value is double d)
+        {
+            result = d;
+            return true;
+        }
+
+        if (value is float f)
+        {
+            result = f;
+            return true;
+        }
+
+        if (double.TryParse(value.ToString(), out var parsed))
+        {
+            result = parsed;
+            return true;
+        }
+
+        result = 0;
+        return false;
+    }
+
+    private static string InterpolateColor(double value, double min, double max, string start, string end)
+    {
+        if (max <= min)
+        {
+            return start;
+        }
+
+        var t = Math.Clamp((value - min) / (max - min), 0, 1);
+        var (sr, sg, sb) = HexToRgb(start);
+        var (er, eg, eb) = HexToRgb(end);
+
+        var r = (int)Math.Round(sr + (er - sr) * t);
+        var g = (int)Math.Round(sg + (eg - sg) * t);
+        var b = (int)Math.Round(sb + (eb - sb) * t);
+
+        return $"#{r:X2}{g:X2}{b:X2}";
+    }
+
+    private static (int r, int g, int b) HexToRgb(string hex)
+    {
+        var cleaned = hex.TrimStart('#');
+        var r = Convert.ToInt32(cleaned.Substring(0, 2), 16);
+        var g = Convert.ToInt32(cleaned.Substring(2, 2), 16);
+        var b = Convert.ToInt32(cleaned.Substring(4, 2), 16);
+        return (r, g, b);
+    }
 }

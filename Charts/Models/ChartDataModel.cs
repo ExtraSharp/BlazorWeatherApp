@@ -1,9 +1,10 @@
-﻿namespace Server.Models;
+namespace Server.Models;
 
-public class ChartDataModel
+public sealed class ChartDataModel
 {
-    public string X { get; set; }
-    public double High { get; set; }
-    public double Low { get; set; }
-    public double Precipitation { get; set; }
+    public string X { get; init; } = string.Empty;
+    public double High { get; init; }
+    public double Low { get; init; }
+    public double Mean { get; init; }
+    public double Precipitation { get; init; }
 }

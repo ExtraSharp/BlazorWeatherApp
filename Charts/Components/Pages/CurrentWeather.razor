@@ -1,7 +1,8 @@
 @using Server.Models
-@if (CurrentWeatherData == null)
+
+@if (CurrentWeatherData?.Weather == null)
 {
-    <p>Loading....</p>
+    <p>Loading...</p>
 }
 else
 {
@@ -37,21 +38,21 @@ else
                     @:<img src="/images/cloudy-night.png" alt="Cloudy Night" class="weather-icon">
                     break;
             }
-            <span class="temp-value">@Temperature °C</span>
+            <span class="temp-value">@FormatNumber(Temperature)&nbsp;&deg;C</span>
         </div>
 
         <div class="metric-list">
             <div class="metric-row">
                 <span class="metric-label">Dew Point</span>
-                <span class="metric-value">@(DewPoint) °C</span>
+                <span class="metric-value">@FormatNumber(DewPoint)&nbsp;&deg;C</span>
             </div>
             <div class="metric-row">
                 <span class="metric-label">Humidity</span>
-                <span class="metric-value">@Humidity %</span>
+                <span class="metric-value">@FormatPercent(Humidity)</span>
             </div>
             <div class="metric-row">
                 <span class="metric-label">Cloud Cover</span>
-                <span class="metric-value">@CloudCover %</span>
+                <span class="metric-value">@FormatPercent(CloudCover)</span>
             </div>
         </div>
         <span class="last-update">Last updated @LastUpdatedTime</span>
@@ -66,4 +67,14 @@ else
     [Parameter] public double? Humidity { get; set; }
     [Parameter] public double? CloudCover { get; set; }
     [Parameter] public string? LastUpdatedTime { get; set; }
+
+    private static string FormatNumber(double? value) =>
+        value.HasValue
+            ? value.Value.ToString("F1", CultureInfo.CurrentCulture)
+            : "n/a";
+
+    private static string FormatPercent(double? value) =>
+        value.HasValue
+            ? $"{value.Value:F1}%"
+            : "n/a";
 }

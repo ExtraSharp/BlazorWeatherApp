@@ -11,12 +11,10 @@
     <None Remove="SegMDL2.ttf" />
   </ItemGroup>
 <ItemGroup>
-	    <PackageReference Include="RestSharp" Version="110.2.1-alpha.0.16" />
-	    <PackageReference Include="Syncfusion.Blazor.Charts" Version="25.1.35" />
-	    <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="25.1.35" />
-	    <PackageReference Include="Syncfusion.Blazor.HeatMap" Version="25.1.40" />
-    <PackageReference Include="Syncfusion.Blazor.Navigations" Version="25.1.35" />
-    <PackageReference Include="Syncfusion.Blazor.Themes" Version="25.1.35" />
+	    <PackageReference Include="Syncfusion.Blazor.Charts" Version="33.1.44" />
+	    <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="33.1.44" />
+	    <PackageReference Include="Syncfusion.Blazor.HeatMap" Version="33.1.44" />
+    <PackageReference Include="Syncfusion.Blazor.Themes" Version="33.1.44" />
 </ItemGroup>
 <ItemGroup>
   <Content Update="wwwroot\images\clear-night.png">

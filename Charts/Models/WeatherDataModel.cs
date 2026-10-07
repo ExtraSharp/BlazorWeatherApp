@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Components;
-
 namespace Server.Models;
 
-public class WeatherDataModel
+public sealed class WeatherDataModel
 {
     public int Day { get; set; }
     public int Month { get; set; }

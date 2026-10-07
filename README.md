@@ -6,10 +6,21 @@ Simple Blazor Web application that reads current weather data from an api and di
 
 ## Technologies Used
 * C#
-* .NET 8.0
+* .NET 10.0
 * Blazor Web App
 * RestAPI
 * Syncfusion Blazor Components
+
+## Local configuration
+Set the Syncfusion license key outside the repo via user secrets, app configuration, or the `SYNCFUSION_LICENSE_KEY` environment variable.
+
+## Build and test
+Use the XML solution file format introduced by the .NET 10 SDK:
+
+```powershell
+dotnet build .\BlazorWeatherApp.slnx -c Release
+dotnet test .\BlazorWeatherApp.slnx -c Release
+```
 
 ## To-Do List
 

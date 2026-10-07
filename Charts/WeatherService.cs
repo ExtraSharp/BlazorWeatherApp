@@ -1,58 +1,53 @@
 namespace Server;
 
-public class WeatherService(ApiService apiService)
+public sealed class WeatherService(ApiService apiService, TimeProvider timeProvider)
 {
     private readonly ApiService _apiService = apiService;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
-    public async Task<IReadOnlyCollection<WeatherDataModel>> GetChartDataForDisplay(string latitude, string longitude)
+    public async Task<IReadOnlyCollection<WeatherDataModel>> GetChartDataForDisplay(
+        string latitude,
+        string longitude,
+        DateTime? targetDate = null,
+        CancellationToken cancellationToken = default)
     {
-        var entireMonth = await FetchEntireMonth(latitude, longitude);
+        var effectiveDate = targetDate ?? _timeProvider.GetLocalNow().DateTime.Date;
+        var entireMonth = await FetchEntireMonth(effectiveDate, latitude, longitude, cancellationToken);
         var dayModels = CreateDayModels(entireMonth);
 
         return GroupDayModels(dayModels);
     }
 
-    public async Task<List<WeatherDataModel>> GetClimateChartData(string latitude, string longitude)
+    public async Task<IReadOnlyList<WeatherDataModel>> GetClimateChartData(
+        string latitude,
+        string longitude,
+        CancellationToken cancellationToken = default)
     {
-        const int year = 2023;
-        const int maxConcurrentMonths = 4;
-        List<WeatherDataModel> output = new();
+        var latestAvailableDate = _timeProvider.GetLocalNow().DateTime.Date;
+        var climateSourceData = await FetchClimateSourceData(latitude, longitude, latestAvailableDate, cancellationToken);
+        return BuildClimateChartData(climateSourceData);
+    }
 
-        using var monthThrottle = new SemaphoreSlim(maxConcurrentMonths);
-        var monthTasks = Enumerable.Range(1, 12)
-            .Select(async month =>
-            {
-                await monthThrottle.WaitAsync();
-                try
-                {
-                    var yearTasks = Enumerable.Range(0, 5)
-                        .Select(i => FetchEntireYear(year - i, month, latitude, longitude))
-                        .ToArray();
+    internal static List<WeatherDataModel> BuildClimateChartData(IReadOnlyList<IReadOnlyCollection<WeatherModel>> yearlyData)
+    {
+        List<WeatherDataModel> output = new(12);
 
-                    var yearDataSets = await Task.WhenAll(yearTasks);
-                    var chartData = yearDataSets
-                        .Select(data => CalculateMonthlySummary(CalculateMonthlyAverages(data)))
-                        .ToList();
+        for (int month = 1; month <= 12; month++)
+        {
+            var chartData = yearlyData
+                .Select(yearData => yearData.Where(data => data.TimeStamp.Month == month).ToList())
+                .Select(CalculateMonthlyAverages)
+                .Where(monthlyAverages => monthlyAverages.Count > 0)
+                .Select(CalculateMonthlySummary)
+                .ToList();
 
-                    var finalData = CalculateFinalSummary(chartData);
-                    return (month, finalData);
-                }
-                finally
-                {
-                    monthThrottle.Release();
-                }
-            })
-            .ToArray();
-
-        var monthResults = await Task.WhenAll(monthTasks);
-        output.AddRange(monthResults
-            .OrderBy(result => result.month)
-            .Select(result => result.finalData));
+            output.Add(CalculateFinalSummary(chartData));
+        }
 
         return output;
     }
 
-    private List<WeatherDataModel> CalculateMonthlyAverages(List<WeatherModel> yearData)
+    internal static List<WeatherDataModel> CalculateMonthlyAverages(IReadOnlyCollection<WeatherModel> yearData)
     {
         var filtered = yearData
             .Where(data => data.Temperature != null)
@@ -69,17 +64,17 @@ public class WeatherService(ApiService apiService)
             {
                 Year = group.Key.Year,
                 Month = group.Key.Month,
-                MaxTemp = (double)group.Max(data => data.Temperature),
-                MinTemp = (double)group.Min(data => data.Temperature),
-                MeanTemp = (double)group.Average(data => data.Temperature),
-                //AverageHigh = group.Average(data => data.Temperature),
-                // Calculate other statistics as needed
+                MaxTemp = group.Max(data => data.Temperature!.Value),
+                MinTemp = group.Min(data => data.Temperature!.Value),
+                MeanTemp = group.Average(data => data.Temperature!.Value),
+                Precipitation = group.Sum(data => data.Precipitation ?? 0),
+                SunshineHours = group.Sum(data => (data.SunshineHours ?? 0) / 60)
             })
             .ToList();
     }
 
 
-    private WeatherDataModel CalculateMonthlySummary(List<WeatherDataModel> monthlyAverages)
+    internal static WeatherDataModel CalculateMonthlySummary(IReadOnlyCollection<WeatherDataModel> monthlyAverages)
     {
         if (monthlyAverages.Count == 0)
         {
@@ -92,13 +87,15 @@ public class WeatherService(ApiService apiService)
             MeanTemp = monthlyAverages.Average(day => day.MeanTemp),
             MinTemp = monthlyAverages.Average(day => day.MinTemp),
             MonthlyHigh = monthlyAverages.Max(day => day.MaxTemp),
-            MonthlyLow = monthlyAverages.Min(day => day.MinTemp)
+            MonthlyLow = monthlyAverages.Min(day => day.MinTemp),
+            Precipitation = monthlyAverages.Sum(day => day.Precipitation),
+            SunshineHours = monthlyAverages.Sum(day => day.SunshineHours)
         };
 
         return monthData;
     }
 
-    private WeatherDataModel CalculateFinalSummary(List<WeatherDataModel> chartData)
+    internal static WeatherDataModel CalculateFinalSummary(IReadOnlyCollection<WeatherDataModel> chartData)
     {
         if (chartData.Count == 0)
         {
@@ -113,58 +110,98 @@ public class WeatherService(ApiService apiService)
             MonthlyLow = chartData.Average(day => day.MonthlyLow),
             MaxTemp = chartData.Average(day => day.MaxTemp),
             MeanTemp = chartData.Average(day => day.MeanTemp),
-            MinTemp = chartData.Average(day => day.MinTemp)
+            MinTemp = chartData.Average(day => day.MinTemp),
+            Precipitation = chartData.Average(day => day.Precipitation),
+            SunshineHours = chartData.Average(day => day.SunshineHours)
         };
 
         return finalData;
     }
 
-    private async Task<List<WeatherModel>> FetchEntireYear(int year, int month, string latitude, string longitude)
+    internal static bool ShouldRequestRange(DateTime rangeStart, DateTime latestAvailableDate) =>
+        rangeStart.Date <= latestAvailableDate.Date;
+
+    private async Task<IReadOnlyList<IReadOnlyCollection<WeatherModel>>> FetchClimateSourceData(
+        string latitude,
+        string longitude,
+        DateTime latestAvailableDate,
+        CancellationToken cancellationToken)
     {
-        int days = DateTime.DaysInMonth(year, month);
-        var response = await _apiService.GetEntireData(
-            $"{year}-{month:00}-01",
-            $"{year}-{month:00}-{days:00}",
-            latitude,
-            longitude);
+        var tasks = Enumerable
+            .Range(0, 5)
+            .Select(offset => FetchYearRange(latestAvailableDate.Year - offset, latestAvailableDate, latitude, longitude, cancellationToken))
+            .ToArray();
 
-        var weatherData = response?.weather ?? Enumerable.Empty<WeatherModel>();
-
-        return weatherData.ToList();
+        return await Task.WhenAll(tasks);
     }
 
-    private async Task<List<WeatherModel>> FetchEntireMonth(string latitude, string longitude)
+    private async Task<List<WeatherModel>> FetchYearRange(
+        int year,
+        DateTime latestAvailableDate,
+        string latitude,
+        string longitude,
+        CancellationToken cancellationToken)
     {
-        var today = DateTime.Today;
-        var desiredDate = new DateTime(today.Year, today.Month, today.Day);
+        var rangeStart = new DateTime(year, 1, 1);
 
-        var responses = await FetchHistoricalWeatherData(desiredDate, true, latitude, longitude);
+        if (!ShouldRequestRange(rangeStart, latestAvailableDate))
+        {
+            return [];
+        }
 
-        return responses
-            .Where(r => r != null)
-            .SelectMany(r => r.weather ?? Enumerable.Empty<WeatherModel>())
-            .Where(weather => weather.TimeStamp.Month == today.Month) // Filter by month
+        var rangeEnd = year == latestAvailableDate.Year
+            ? latestAvailableDate
+            : new DateTime(year, 12, 31);
+
+        var response = await _apiService.GetWeatherRangeData(
+            rangeStart.ToString("yyyy-MM-dd"),
+            rangeEnd.ToString("yyyy-MM-dd"),
+            latitude,
+            longitude,
+            cancellationToken);
+
+        var weatherData = response?.Weather ?? [];
+
+        return weatherData
+            .OfType<WeatherModel>()
             .ToList();
     }
 
-    private static IEnumerable<WeatherDataModel> CreateDayModels(IEnumerable<WeatherModel> mergedList)
+    private async Task<List<WeatherModel>> FetchEntireMonth(
+        DateTime desiredDate,
+        string latitude,
+        string longitude,
+        CancellationToken cancellationToken)
+    {
+        var responses = await FetchHistoricalWeatherData(desiredDate, true, latitude, longitude, cancellationToken);
+
+        return responses
+            .Where(r => r != null)
+            .SelectMany(r => r?.Weather ?? [])
+            .OfType<WeatherModel>()
+            .Where(weather => weather.TimeStamp.Month == desiredDate.Month)
+            .ToList();
+    }
+
+    internal static IReadOnlyList<WeatherDataModel> CreateDayModels(IEnumerable<WeatherModel> mergedList)
     {
         return mergedList
             .Where(weather => weather.Temperature.HasValue)
-            .GroupBy(weather => new { Day = weather.TimeStamp.Day, Month = weather.TimeStamp.Month, Year = weather.TimeStamp.Year })
+            .GroupBy(weather => weather.TimeStamp.Date)
             .Select(group => new WeatherDataModel
             {
-                Day = group.First().TimeStamp.Day,
-                Month = group.First().TimeStamp.Month,
-                Year = group.First().TimeStamp.Year,
-                MaxTemp = (double)group.Max(weather => weather.Temperature),
-                MinTemp = (double)group.Min(weather => weather.Temperature),
-                Precipitation = group.Average(weather => weather.Precipitation ?? double.MinValue)
+                Day = group.Key.Day,
+                Month = group.Key.Month,
+                Year = group.Key.Year,
+                MaxTemp = group.Max(weather => weather.Temperature!.Value),
+                MinTemp = group.Min(weather => weather.Temperature!.Value),
+                MeanTemp = group.Average(weather => weather.Temperature!.Value),
+                Precipitation = group.Sum(weather => weather.Precipitation ?? 0)
             })
             .ToList();
     }
 
-    private static List<WeatherDataModel> GroupDayModels(IEnumerable<WeatherDataModel> dayModels)
+    internal static List<WeatherDataModel> GroupDayModels(IEnumerable<WeatherDataModel> dayModels)
     {
         return dayModels
             .GroupBy(dayModel => dayModel.Day)
@@ -173,17 +210,20 @@ public class WeatherService(ApiService apiService)
                 Day = group.Key,
                 MaxTemp = group.Average(dayModel => dayModel.MaxTemp),
                 MinTemp = group.Average(dayModel => dayModel.MinTemp),
-                Precipitation = group.Sum(dayModel => dayModel.Precipitation)
-                // Include other properties as needed
+                MeanTemp = group.Average(dayModel => dayModel.MeanTemp),
+                Precipitation = group.Average(dayModel => dayModel.Precipitation)
             })
             .ToList();
     }
 
-    public async Task<IReadOnlyCollection<WeatherDataModel>> GetWeatherDataForDisplay(string latitude, string longitude)
+    public async Task<IReadOnlyCollection<WeatherDataModel>> GetWeatherDataForDisplay(
+        string latitude,
+        string longitude,
+        CancellationToken cancellationToken = default)
     {
-        var desiredDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+        var desiredDate = _timeProvider.GetLocalNow().DateTime.Date;
 
-        var responses = await FetchHistoricalWeatherData(desiredDate, false, latitude, longitude);
+        var responses = await FetchHistoricalWeatherData(desiredDate, false, latitude, longitude, cancellationToken);
         var mergedResponse = MergeWeatherResponses(responses, desiredDate.Day);
 
         return CalculateDailyMeans(mergedResponse);
@@ -193,32 +233,32 @@ public class WeatherService(ApiService apiService)
         DateTime desiredDate,
         bool monthly,
         string latitude,
-        string longitude)
+        string longitude,
+        CancellationToken cancellationToken = default)
     {
         var tasks = new List<Task<MultipleWeatherResponseModel?>>();
 
         if (monthly)
         {
-            var firstDayOfMonth = new DateTime(desiredDate.Year, desiredDate.Month, 1);
-            var lastDayOfMonth = firstDayOfMonth.AddMonths(1);
+            var latestAvailableDate = _timeProvider.GetLocalNow().DateTime.Date;
 
-            tasks.Add(_apiService.GetMonthlyData(
-                firstDayOfMonth.ToString("yyyy-MM-dd"),
-                lastDayOfMonth.ToString("yyyy-MM-dd"),
-                latitude,
-                longitude));
-
-            // Loop for going back year by year
-            for (var i = 1; i <= 20; i++)
+            for (var i = 0; i <= 20; i++)
             {
                 var yearToSubtract = desiredDate.Year - i;
                 var firstDayOfYear = new DateTime(yearToSubtract, desiredDate.Month, 1);
+
+                if (!ShouldRequestRange(firstDayOfYear, latestAvailableDate))
+                {
+                    continue;
+                }
+
                 var lastDayOfYear = firstDayOfYear.AddMonths(1);
-                tasks.Add(_apiService.GetMonthlyData(
+                tasks.Add(_apiService.GetWeatherRangeData(
                     firstDayOfYear.ToString("yyyy-MM-dd"),
                     lastDayOfYear.ToString("yyyy-MM-dd"),
                     latitude,
-                    longitude));
+                    longitude,
+                    cancellationToken));
             }
         }
         else
@@ -226,51 +266,51 @@ public class WeatherService(ApiService apiService)
             for (var i = 0; i < 20; i++)
             {
                 var dateString = desiredDate.AddYears(-i).ToString("yyyy-MM-dd");
-                tasks.Add(_apiService.GetHistoricalWeatherData(dateString, latitude, longitude));
+                tasks.Add(_apiService.GetHistoricalWeatherData(dateString, latitude, longitude, cancellationToken));
             }
         }
 
         return await Task.WhenAll(tasks);
     }
 
-    private static MultipleWeatherResponseModel MergeWeatherResponses(IEnumerable<MultipleWeatherResponseModel?> responses, int day)
+    internal static MultipleWeatherResponseModel MergeWeatherResponses(IEnumerable<MultipleWeatherResponseModel?> responses, int day)
     {
-        var mergedResponse = new MultipleWeatherResponseModel();
-
         var weatherList = responses
-            .Where(response => response?.weather != null)
-            .SelectMany(response => response?.weather ?? Array.Empty<WeatherModel>())
-            .Where(weather => weather?.TimeStamp.Day == day)
-            .GroupBy(weather => weather?.TimeStamp)
+            .Where(response => response?.Weather is { Length: > 0 })
+            .SelectMany(response => response?.Weather ?? [])
+            .OfType<WeatherModel>()
+            .Where(weather => weather.TimeStamp.Day == day)
+            .GroupBy(weather => weather.TimeStamp)
             .Select(group => group.First())
             .ToList();
 
-        mergedResponse.weather = weatherList.ToArray();
-
-        return mergedResponse;
+        return new MultipleWeatherResponseModel
+        {
+            Weather = weatherList.Cast<WeatherModel?>().ToArray()
+        };
     }
 
-    private static List<WeatherDataModel> CalculateDailyMeans(MultipleWeatherResponseModel mergedResponse)
+    internal static List<WeatherDataModel> CalculateDailyMeans(MultipleWeatherResponseModel mergedResponse)
     {
-        if (mergedResponse.weather == null || mergedResponse.weather.Length == 0)
+        if (mergedResponse.Weather.Length == 0)
         {
             return new List<WeatherDataModel>();
         }
 
-        var groupedByDay = mergedResponse.weather
-            .Where(w => w != null)
-            .GroupBy(w => w!.TimeStamp.Date);
+        var groupedByDay = mergedResponse.Weather
+            .OfType<WeatherModel>()
+            .GroupBy(w => w.TimeStamp.Date);
 
         return groupedByDay.Select(group => new WeatherDataModel
             {
                 Day = group.Key.Day,
                 Month = group.Key.Month,
                 Year = group.Key.Year,
-                MeanTemp = group.Average(w => w?.Temperature ?? 0),
-                MaxTemp = group.Max(w => w?.Temperature ?? 0),
-                MinTemp = group.Min(w => w?.Temperature ?? 0),
-                Precipitation = group.Sum(w => w?.Precipitation ?? 0),
-                SunshineHours = group.Sum(w => w?.SunshineHours / 60 ?? 0)
+                MeanTemp = group.Average(w => w.Temperature ?? 0),
+                MaxTemp = group.Max(w => w.Temperature ?? 0),
+                MinTemp = group.Min(w => w.Temperature ?? 0),
+                Precipitation = group.Sum(w => w.Precipitation ?? 0),
+                SunshineHours = group.Sum(w => (w.SunshineHours ?? 0) / 60)
             })
             .ToList();
     }

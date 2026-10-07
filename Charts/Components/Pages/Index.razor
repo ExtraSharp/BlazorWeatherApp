@@ -1,33 +1,8 @@
 @page "/"
-@inject ApiService ApiService
-@inject WeatherService WeatherService
-@inject IJSRuntime Js
 @rendermode @(new InteractiveServerRenderMode(prerender:false))
 @using Syncfusion.Blazor.DropDowns
 
 <PageTitle>Blazor Weather App</PageTitle>
-
-<script>
-    window.registerViewportChangeCallback = (dotnetHelper) => {
-        window.addEventListener('load', () => {
-            dotnetHelper.invokeMethodAsync('OnResize', window.innerWidth, window.innerHeight);
-        });
-        window.addEventListener('resize', () => {
-            dotnetHelper.invokeMethodAsync('OnResize', window.innerWidth, window.innerHeight);
-        });
-    }
-
-    var lockResolver;
-    if (navigator && navigator.locks && navigator.locks.request) {
-        const promise = new Promise((res) => {
-            lockResolver = res;
-        });
-
-        navigator.locks.request('unique_lock_name', { mode: "shared" }, () => {
-            return promise;
-        });
-    }
-</script>
 
 <div class="page-shell">
     <header class="page-header">
@@ -38,8 +13,8 @@
         </div>
         <div class="page-status">
             <span class="status-label">Station</span>
-            <span class="status-value">@(!string.IsNullOrWhiteSpace(StationName) ? StationName : "Not selected")</span>
-            <span class="status-subtitle">Last updated @LastUpdatedTime</span>
+            <span class="status-value">@State.StationDisplayName</span>
+            <span class="status-subtitle">Last updated @State.LastUpdatedTime</span>
         </div>
     </header>
 
@@ -48,67 +23,67 @@
             <div class="field">
                 <label class="field-label">Station</label>
                 <div class="control-wrapper">
-                    <SfComboBox TValue="string" TItem="WeatherStations" Placeholder="Select a station" DataSource="@StationData">
-                        <ComboBoxEvents TValue="string" TItem="WeatherStations" ValueChange="OnChange"/>
-                        <ComboBoxFieldSettings Value="ID" Text="Text"></ComboBoxFieldSettings>
+                    <SfComboBox TValue="string" TItem="WeatherStationOption" Placeholder="Select a station" DataSource="@State.StationData" Enabled="@(!State.IsBusy && !State.IsStationsLoading)">
+                        <ComboBoxEvents TValue="string" TItem="WeatherStationOption" ValueChange="OnChange" />
+                        <ComboBoxFieldSettings Value="Id" Text="Text"></ComboBoxFieldSettings>
                     </SfComboBox>
                 </div>
             </div>
             <div class="field">
                 <label class="field-label">Latitude</label>
-                <input class="text-input" type="text" @bind="Latitude" aria-label="Latitude" placeholder="Latitude" pattern="-?\\d+(\\.\\d*)?" oninput="this.value = this.value.replace(/[^0-9\\.-]/g, '');">
+                <input class="text-input" type="text" @bind="State.Latitude" disabled="@State.IsBusy" aria-label="Latitude" placeholder="Latitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.-]/g, '');">
             </div>
             <div class="field">
                 <label class="field-label">Longitude</label>
-                <input class="text-input" type="text" @bind="Longitude" aria-label="Longitude" placeholder="Longitude" pattern="-?\\d+(\\.\\d*)?" oninput="this.value = this.value.replace(/[^0-9\\.-]/g, '');">
+                <input class="text-input" type="text" @bind="State.Longitude" disabled="@State.IsBusy" aria-label="Longitude" placeholder="Longitude" pattern="-?\d+(\.\d*)?" oninput="this.value = this.value.replace(/[^0-9\.-]/g, '');">
             </div>
             <div class="field actions-field">
                 <label class="field-label">Actions</label>
-                @if (_displayIcon)
+                @if (State.DisplayRefreshIcon)
                 {
-                    <button @onclick="RefreshData" type="button" class="btn btn-primary refresh-button" aria-label="Refresh">&#x21bb;</button>
+                    <button @onclick="RefreshData" type="button" class="btn btn-primary refresh-button" aria-label="Refresh" disabled="@State.IsBusy">&#x21bb;</button>
                 }
                 else
                 {
-                    <button @onclick="RefreshData" type="button" class="btn btn-primary refresh-button">Refresh</button>
+                    <button @onclick="RefreshData" type="button" class="btn btn-primary refresh-button" disabled="@State.IsBusy">@(State.IsRefreshing ? "Refreshing..." : "Refresh")</button>
                 }
             </div>
         </div>
-        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        @if (!string.IsNullOrWhiteSpace(State.ErrorMessage))
         {
-            <div class="inline-alert">@ErrorMessage</div>
+            <div class="inline-alert">@State.ErrorMessage</div>
         }
     </section>
 
     <section class="section-grid">
         <div class="card">
             <h3>Current Weather</h3>
-            <CurrentWeather CurrentWeatherData="CurrentWeather" Temperature="@Temperature" DewPoint="@DewPoint" Humidity="@Humidity" CloudCover="@CloudCover" Icon="@Icon" LastUpdatedTime="@LastUpdatedTime" />
+            <CurrentWeather CurrentWeatherData="State.CurrentWeather" Temperature="@State.Temperature" DewPoint="@State.DewPoint" Humidity="@State.Humidity" CloudCover="@State.CloudCover" Icon="@State.Icon" LastUpdatedTime="@State.LastUpdatedTime" />
         </div>
 
         <div class="card">
-            <h3>Historical Data for @DateTime.Now.ToString("dd MMM")</h3>
-            <HistoricalAverages Data="@HistoricalAverages"></HistoricalAverages>
+            <h3>Historical Data for @TodayLabel</h3>
+            <HistoricalAverages Data="@State.HistoricalAverages"></HistoricalAverages>
         </div>
     </section>
 
     <section class="card chart-card">
         <div class="card-header">
-            <h3>Climate Chart for @StationName</h3>
+            <h3>Climate Chart for @State.StationDisplayName</h3>
         </div>
         <div class="chart-body">
-            @if (!string.IsNullOrWhiteSpace(ClimateErrorMessage))
+            @if (!string.IsNullOrWhiteSpace(State.ClimateErrorMessage))
             {
-                <span class="chart-error">@ClimateErrorMessage</span>
+                <span class="chart-error">@State.ClimateErrorMessage</span>
             }
-            else if (HeatMapData == null)
+            else if (State.HeatMapData == null)
             {
                 <span class="chart-loading">Loading climate data...</span>
             }
             else
             {
                 <div class="heatmap-wrapper">
-                    <HeatMap HeatMapData="@HeatMapData" TextOverflow="@TextOverflow" FontSize="@DataLabelFontSize" />
+                    <HeatMap HeatMapData="@State.HeatMapData" TextOverflow="@State.TextOverflow" FontSize="@State.DataLabelFontSize" />
                 </div>
             }
         </div>
@@ -116,14 +91,17 @@
 
     <section class="card chart-card">
         <div class="card-header">
-            <h3>Mean Temperatures and Precipitation for @DateTime.Now.ToString("MMMM")</h3>
+            <div>
+                <h3>Mean Temperatures and Precipitation</h3>
+                <span class="card-subtitle">@State.SelectedMonthLabel</span>
+            </div>
+            <div class="month-nav">
+                <button class="btn btn-outline" type="button" @onclick="() => ChangeMonth(-1)" disabled="@State.IsBusy">Previous</button>
+                <button class="btn btn-outline" type="button" @onclick="() => ChangeMonth(1)" disabled="@State.IsBusy">Next</button>
+            </div>
         </div>
         <div class="chart-body">
-            <WeatherChart Temperatures="@Temperatures" Width="@Width" @rendermode="@RenderMode.InteractiveServer" />
+            <WeatherChart Temperatures="@State.Temperatures" Width="@State.Width" @rendermode="@RenderMode.InteractiveServer" />
         </div>
     </section>
 </div>
-
-@code {
-     
-}

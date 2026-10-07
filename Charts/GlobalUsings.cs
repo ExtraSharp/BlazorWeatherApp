@@ -1,7 +1,16 @@
 global using System.Globalization;
+global using System.Net.Http.Json;
+global using System.Diagnostics;
+global using System.Text.Json.Serialization;
+global using Microsoft.AspNetCore.Components;
+global using Microsoft.AspNetCore.WebUtilities;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Caching.Memory;
+global using Microsoft.Extensions.Options;
 global using Microsoft.JSInterop;
 global using Server;
 global using Server.Components;
 global using Server.Models;
+global using Server.Options;
 global using Syncfusion.Blazor;
 global using Syncfusion.Blazor.HeatMap;

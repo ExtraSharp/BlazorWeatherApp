@@ -1,35 +1,39 @@
 @using Server.Models
+
 <div class="metric-list">
     <div class="metric-row">
         <span class="metric-label">Mean Daily Maximum</span>
-        <span class="metric-value">@Data.MaxTemp.ToString("F1") °C</span>
+        <span class="metric-value">@FormatNumber(Data.MaxTemp)&nbsp;&deg;C</span>
     </div>
     <div class="metric-row">
         <span class="metric-label">Daily Mean</span>
-        <span class="metric-value">@Data.MeanTemp.ToString("F1") °C</span>
+        <span class="metric-value">@FormatNumber(Data.MeanTemp)&nbsp;&deg;C</span>
     </div>
     <div class="metric-row">
         <span class="metric-label">Mean Daily Minimum</span>
-        <span class="metric-value">@Data.MinTemp.ToString("F1") °C</span>
+        <span class="metric-value">@FormatNumber(Data.MinTemp)&nbsp;&deg;C</span>
     </div>
     <div class="metric-row">
         <span class="metric-label">Precipitation</span>
-        <span class="metric-value">@Data.Precipitation.ToString("F1") mm</span>
+        <span class="metric-value">@Data.Precipitation.ToString("F1", CultureInfo.CurrentCulture) mm</span>
     </div>
     <div class="metric-row">
         <span class="metric-label">Sunshine Hours</span>
-        <span class="metric-value">@Data.SunshineHours.ToString("F1") hours</span>
+        <span class="metric-value">@Data.SunshineHours.ToString("F1", CultureInfo.CurrentCulture) hours</span>
     </div>
     <div class="metric-row">
         <span class="metric-label">Record High</span>
-        <span class="metric-value">@Data.RecordHigh.ToString("F1")°C (@Data.RecordHighYear)</span>
+        <span class="metric-value">@FormatNumber(Data.RecordHigh)&nbsp;&deg;C (@Data.RecordHighYear)</span>
     </div>
     <div class="metric-row">
         <span class="metric-label">Record Low</span>
-        <span class="metric-value">@Data.RecordLow.ToString("F1")°C (@Data.RecordLowYear)</span>
+        <span class="metric-value">@FormatNumber(Data.RecordLow)&nbsp;&deg;C (@Data.RecordLowYear)</span>
     </div>
 </div>
 
 @code {
-    [Parameter] public WeatherDataModel Data { get; set; }
+    [Parameter] public WeatherDataModel Data { get; set; } = new();
+
+    private static string FormatNumber(double value) =>
+        value.ToString("F1", CultureInfo.CurrentCulture);
 }

@@ -4,8 +4,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddSyncfusionBlazor();
-builder.Services.AddSingleton<ApiService>();
+builder.Services.AddOptions<BrightSkyOptions>()
+    .Bind(builder.Configuration.GetSection(BrightSkyOptions.SectionName));
+builder.Services.AddHttpClient<ApiService>((serviceProvider, client) =>
+{
+    var options = serviceProvider.GetRequiredService<IOptions<BrightSkyOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(options.RequestTimeoutSeconds);
+});
 builder.Services.AddScoped<WeatherService>();
+builder.Services.AddScoped<WeatherDashboardService>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddMemoryCache();
 
 //IConfigurationRoot configuration = new ConfigurationBuilder()
@@ -16,8 +25,9 @@ builder.Services.AddMemoryCache();
 //var syncfusionKey = configuration["SyncfusionLicenseKey"];
 //Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
 
-// Retrieve Syncfusion license key from environment variable
-var syncfusionKey = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY");
+var syncfusionKey =
+    builder.Configuration["Syncfusion:LicenseKey"] ??
+    Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY");
 
 // Register Syncfusion license key
 if (!string.IsNullOrWhiteSpace(syncfusionKey))
